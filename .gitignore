@@ -1,0 +1,66 @@
+# =====================================================================
+#  BlindNote - Reglas de exclusion para Git
+#  Proyecto: Diseno de Seguridad de Redes - Tercer Parcial
+# =====================================================================
+
+# ------------------------- Sistema operativo -------------------------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+desktop.ini
+
+# ------------------------- Editores / IDE ----------------------------
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+*~
+*.orig
+*.rej
+
+# ------------------------- Entorno y secretos ------------------------
+# La app lee DB_HOST, DB_USUARIO, DB_CLAVE... desde el entorno.
+# Nunca versionar credenciales reales: usa .env.example como plantilla.
+.env
+.env.*
+!.env.example
+config/local.php
+*.pem
+*.key
+*.p12
+*.pfx
+
+# ------------------------- Dependencias ------------------------------
+vendor/
+node_modules/
+
+# ------------------------- Registros ---------------------------------
+*.log
+logs/
+error_log
+
+# ------------------------- Respaldos de base de datos ----------------
+# Ojo: database/schema.sql SI se versiona (es parte del entregable).
+*.sql.gz
+*.sql.bak
+*.dump
+*.dump.sql
+dump*.sql
+database/backups/
+database/backup/
+
+# ------------------------- Temporales y cache ------------------------
+tmp/
+temp/
+*.tmp
+*.cache
+.phpunit.result.cache
+
+# ------------------------- Herramientas de agentes (ATL) -------------
+.atl/
