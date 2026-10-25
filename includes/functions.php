@@ -312,6 +312,78 @@ function registrar_intento_login(string $username, bool $exitoso): void
 }
 
 /**
+ * Lista usuarios con busqueda, filtros y paginacion.
+ *
+ * Devuelve array{total:int, usuarios:list<array>, pagina:int, porPagina:int,
+ * totalPaginas:int}. Los filtros y la pagina ya vienen saneados por el
+ * llamador; aca solo se construye la consulta con sentencias preparadas.
+ *
+ * @param array{busqueda?:string, rol?:string, estado?:string} $filtros
+ * @return array{total:int, usuarios:list<array<string,mixed>>, pagina:int, porPagina:int, totalPaginas:int}
+ */
+function listar_usuarios(array $filtros, int $pagina = 1, int $porPagina = USUARIOS_POR_PAGINA): array
+{
+    $porPagina = max(1, $porPagina);
+
+    $condiciones = [];
+    $parametros  = [];
+
+    $busqueda = trim((string) ($filtros['busqueda'] ?? ''));
+    if ($busqueda !== '') {
+        // MySQL nativo (EMULATE_PREPARES=false) exige un placeholder por
+        // aparicion: no se puede repetir el mismo nombre tres veces.
+        $condiciones[] = '(nombre LIKE :q1 OR username LIKE :q2 OR email LIKE :q3)';
+        $parametros[':q1'] = '%' . $busqueda . '%';
+        $parametros[':q2'] = '%' . $busqueda . '%';
+        $parametros[':q3'] = '%' . $busqueda . '%';
+    }
+
+    $rol = (string) ($filtros['rol'] ?? '');
+    if (in_array($rol, ['admin', 'usuario'], true)) {
+        $condiciones[] = 'rol = :rol';
+        $parametros[':rol'] = $rol;
+    }
+
+    $estado = (string) ($filtros['estado'] ?? 'todos');
+    if ($estado === 'activos') {
+        $condiciones[] = 'activo = 1';
+    } elseif ($estado === 'inactivos') {
+        $condiciones[] = 'activo = 0';
+    }
+
+    $where = $condiciones === [] ? '' : ' WHERE ' . implode(' AND ', $condiciones);
+
+    $stmt = db()->prepare('SELECT COUNT(*) AS total FROM usuarios' . $where);
+    $stmt->execute($parametros);
+    $total = (int) ($stmt->fetch()['total'] ?? 0);
+
+    $totalPaginas = max(1, (int) ceil($total / $porPagina));
+    $pagina = min(max(1, $pagina), $totalPaginas);
+    $desplazamiento = ($pagina - 1) * $porPagina;
+
+    $stmt = db()->prepare(
+        'SELECT id, nombre, username, email, rol, activo, ultimo_login, creado_en
+           FROM usuarios' . $where . '
+          ORDER BY id
+          LIMIT :limite OFFSET :desplazamiento'
+    );
+    foreach ($parametros as $clave => $valor) {
+        $stmt->bindValue($clave, $valor);
+    }
+    $stmt->bindValue(':limite', $porPagina, PDO::PARAM_INT);
+    $stmt->bindValue(':desplazamiento', $desplazamiento, PDO::PARAM_INT);
+    $stmt->execute();
+
+    return [
+        'total'        => $total,
+        'usuarios'     => $stmt->fetchAll(),
+        'pagina'       => $pagina,
+        'porPagina'    => $porPagina,
+        'totalPaginas' => $totalPaginas,
+    ];
+}
+
+/**
  * Cuenta intentos fallidos recientes para aplicar el bloqueo temporal.
  *
  * Politica (POLITICA_SEGURIDAD.md): 5 intentos fallidos en 15 minutos

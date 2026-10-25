@@ -213,3 +213,52 @@ code {
     .nav { gap: .1rem; }
     .encabezado-seccion h1 { font-size: 1.25rem; }
 }
+
+/* ------------------------- Filtros y paginación ------------------------
+   Usados por el listado de usuarios de la administración. */
+.filtros {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: flex-end;
+    margin-bottom: 1rem;
+}
+
+.filtros .campo {
+    margin: 0;
+    min-width: 12rem;
+}
+
+.campo--acciones {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.paginacion {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 1rem;
+}
+
+.paginacion__resumen {
+    font-size: 0.9rem;
+    opacity: 0.85;
+}
+
+.paginacion__enlaces {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    align-items: center;
+}
+
+.paginacion__actual {
+    padding: 0.35rem 0.7rem;
+    border-radius: 0.4rem;
+    background: var(--color-primario, #2563eb);
+    color: #fff;
+    font-weight: 600;
+}

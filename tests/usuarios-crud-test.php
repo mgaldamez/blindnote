@@ -145,6 +145,33 @@ db()->prepare('UPDATE usuarios SET activo = 1 WHERE id = :id')->execute([':id' =
 comprobar('con dos admins activos se puede degradar a uno', 1, puede_cambiar_rol($idUsuario, $idAdminUno, 'usuario') ? 1 : 0);
 comprobar('con dos admins activos se puede desactivar a uno', 1, puede_desactivar($idUsuario, $idAdminUno) ? 1 : 0);
 
+/* ---------------- S2: listado paginado con busqueda y filtros ---------------- */
+
+for ($i = 1; $i <= 12; $i++) {
+    crear_usuario(
+        PREFIJO_U . 'pag' . sprintf('%02d', $i),
+        $i <= 2 ? 'admin' : 'usuario',
+        $i === 2 ? 0 : 1,
+        0
+    );
+}
+
+$filtroBase = ['busqueda' => PREFIJO_U . 'pag'];
+$pag1 = listar_usuarios($filtroBase, 1);
+comprobar('la primera pagina trae el maximo configurado', USUARIOS_POR_PAGINA, count($pag1['usuarios']));
+comprobar('el total cuenta los 12', 12, $pag1['total']);
+comprobar('son 2 paginas', 2, $pag1['totalPaginas']);
+
+$pag2 = listar_usuarios($filtroBase, 2);
+comprobar('la segunda pagina trae los 2 restantes', 2, count($pag2['usuarios']));
+comprobar('una pagina fuera de rango cae en la ultima', 2, listar_usuarios($filtroBase, 99)['pagina']);
+
+comprobar('el filtro por rol acota', 2, listar_usuarios($filtroBase + ['rol' => 'admin'])['total']);
+comprobar('el filtro por estado acota', 1, listar_usuarios($filtroBase + ['estado' => 'inactivos'])['total']);
+comprobar('la busqueda por correo encuentra', 1, listar_usuarios(['busqueda' => PREFIJO_U . 'pag03@test.local'])['total']);
+comprobar('una busqueda sin coincidencias da 0', 0, listar_usuarios(['busqueda' => 'no-existe-' . PREFIJO_U])['total']);
+comprobar('no se puede inyectar por el filtro de rol', 12, listar_usuarios($filtroBase + ['rol' => "' OR 1=1 --"])['total']);
+
 /* ---------------- Limpieza ---------------- */
 
 if ($otrosAdmins !== []) {

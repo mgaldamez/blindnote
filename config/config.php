@@ -59,6 +59,9 @@ define('BCRYPT_COST', 12);               // coste de bcrypt (10-13 recomendado)
 // Politica de contrasenas
 define('PASS_MIN_LEN', 8);
 
+// Administracion
+define('USUARIOS_POR_PAGINA', 10);       // filas por pagina en el listado de usuarios
+
 /* ------------------------- Entorno ---------------------------- */
 // true = cookies solo por HTTPS (activalo cuando uses el certificado de Fase 2)
 define('COOKIE_SOLO_HTTPS', env_booleano('COOKIE_SOLO_HTTPS', false));
