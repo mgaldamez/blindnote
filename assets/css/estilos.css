@@ -64,20 +64,6 @@ h2 { font-size: 1.05rem; margin-top: 0; letter-spacing: -.01em; }
     background: var(--texto-fuerte); color: #fff;
     font-size: .85rem; font-weight: 800;
 }
-.nav { display: flex; align-items: center; gap: .15rem; flex-wrap: wrap; }
-.nav a {
-    color: var(--texto-suave); font-weight: 600; font-size: .9rem;
-    padding: .35rem .65rem; border-radius: 6px; transition: background .12s ease, color .12s ease;
-}
-.nav a:hover { color: var(--texto-fuerte); background: var(--panel-suave); text-decoration: none; }
-.nav a.activo { color: var(--texto-fuerte); background: var(--panel-suave); }
-.nav a.btn--primario { color: #fff; }
-.nav a.btn--primario:hover { color: #fff; background: #2e3036; }
-.nav__usuario {
-    color: var(--texto-suave); font-size: .88rem; font-weight: 600;
-    padding: 0 .5rem;
-}
-.nav__usuario em { font-weight: 400; font-style: normal; opacity: .75; }
 .inline { display: inline; }
 
 /* ------------------------- Botones ------------------------- */
