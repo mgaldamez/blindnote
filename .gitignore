@@ -64,3 +64,9 @@ temp/
 
 # ------------------------- Herramientas de agentes (ATL) -------------
 .atl/
+
+# ------------------------- Entregables binarios ----------------------
+# Documentos de entrega: se generan o se suben al aula virtual, no al repo.
+INFORME_PROYECTO.pdf
+INFORME_PROYECTO.docx
+*.docx.pdf

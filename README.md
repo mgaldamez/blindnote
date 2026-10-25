@@ -131,8 +131,6 @@ seguridad-web/
 ├─ admin.php               Control de acceso por roles (solo admin)
 ├─ informe_fase4.php       Fase 4: informe de vulnerabilidades y soluciones
 ├─ INFORME_PROYECTO.md     Informe del proyecto y verificación del checklist
-├─ INFORME_PROYECTO.docx   Informe en Word (entrega)
-├─ INFORME_PROYECTO.pdf    Informe en PDF (entrega)
 ├─ COMO_FUNCIONA.md        Guía técnica: flujos, controles y pruebas
 ├─ POLITICA_SEGURIDAD.md   Fase 5: política de seguridad (borrador)
 ├─ iniciar-web.bat         Lanzador del servidor local (Windows)
@@ -156,13 +154,15 @@ seguridad-web/
 | Archivo | Contenido |
 |---|---|
 | `INFORME_PROYECTO.md` | Informe completo: objetivos, arquitectura, controles, verificación del checklist y evidencias. |
-| `INFORME_PROYECTO.docx` | Misma información en formato Word para entrega. |
-| `INFORME_PROYECTO.pdf` | Versión PDF del informe. |
 | `COMO_FUNCIONA.md` | Guía técnica: flujo de peticiones, autenticación, sesiones, RBAC, CSRF, XSS, SQLi, pruebas y solución de problemas. |
 | `POLITICA_SEGURIDAD.md` | Política de seguridad de la Fase 5. |
 
+> Los entregables en Word y PDF (`INFORME_PROYECTO.docx`, `INFORME_PROYECTO.pdf`)
+> y los PDF del laboratorio no se versionan: están en `.gitignore` y se generan o
+> se entregan por el aula virtual. El contenido fuente es `INFORME_PROYECTO.md`.
+
 > Los archivos `.md` están bloqueados por `.htaccess` para que no se sirvan por
-> HTTP. Ábrelos desde el explorador de archivos o usa los formatos Word/PDF.
+> HTTP. Ábrelos desde el explorador de archivos.
 
 ## 5. Fase 3 — Control de acceso y autenticación
 
