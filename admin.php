@@ -208,14 +208,6 @@ $mensajesAviso = [
                         <a class="btn" href="<?= e($enlacePagina($pagina - 1)) ?>" rel="prev">&laquo; Anterior</a>
                     <?php endif; ?>
 
-                    <?php for ($n = 1; $n <= $totalPaginas; $n++): ?>
-                        <?php if ($n === $pagina): ?>
-                            <span class="paginacion__actual" aria-current="page"><?= $n ?></span>
-                        <?php else: ?>
-                            <a class="btn" href="<?= e($enlacePagina($n)) ?>"><?= $n ?></a>
-                        <?php endif; ?>
-                    <?php endfor; ?>
-
                     <?php if ($pagina < $totalPaginas): ?>
                         <a class="btn" href="<?= e($enlacePagina($pagina + 1)) ?>" rel="next">Siguiente &raquo;</a>
                     <?php endif; ?>

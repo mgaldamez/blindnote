@@ -284,13 +284,6 @@ code {
     align-items: center;
 }
 
-.paginacion__actual {
-    padding: 0.35rem 0.7rem;
-    border-radius: 0.4rem;
-    background: var(--color-primario, #2563eb);
-    color: #fff;
-    font-weight: 600;
-}
 
 .tarjeta__cabecera {
     display: flex;
