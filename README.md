@@ -180,6 +180,8 @@ seguridad-web/
 ├─ dashboard.php           Panel con medidas de seguridad activas
 ├─ notas.php               CRUD que demuestra mitigación de SQLi/XSS/CSRF/IDOR
 ├─ admin.php               Administración: usuarios paginados y auditoría
+├─ auditoria.php           Auditoría paginada con filtros (solo admin)
+├─ auditoria_csv.php       Exportación CSV de la auditoría filtrada
 ├─ usuarios_form.php       Alta y edición de usuarios (solo admin)
 ├─ cambiar_clave.php       Cambio de contraseña (obligatorio si es temporal)
 ├─ informe_fase4.php       Fase 4: informe de vulnerabilidades y soluciones
@@ -201,7 +203,8 @@ seguridad-web/
 ├─ docker-compose.dev.yml  Override que construye desde el Dockerfile
 ├─ tests/
 │  ├─ fuerza-bruta-test.php  Regresión del bloqueo por cuenta e IP
-│  └─ usuarios-crud-test.php Regresión del CRUD y de las guardas de admin
+│  ├─ usuarios-crud-test.php Regresión del CRUD y de las guardas de admin
+│  └─ auditoria-test.php     Regresión de la auditoría y del CSV
 ├─ .github/workflows/ci.yml  Integración continua: build, checks y publicación
 ├─ deploy/nginx.conf.example  Proxy inverso de referencia (solo 443)
 └─ .htaccess               Cabeceras de seguridad y protección de carpetas

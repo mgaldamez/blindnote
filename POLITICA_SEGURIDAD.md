@@ -228,6 +228,11 @@ mysqldump --defaults-extra-file=/ruta/mysql-client.cnf \
 
 ## 9. Registro, monitoreo y auditoría
 
+- El registro se consulta en `auditoria.php` (paginado, con filtros por acción,
+  usuario y fechas) y puede exportarse a CSV como evidencia.
+- La exportación exige rol `admin`, neutraliza fórmulas al inicio de celda
+  (*CSV injection*) y deja su propio evento en la auditoría.
+
 - Se registran como mínimo: inicios de sesión exitosos y fallidos, bloqueos,
   cierres de sesión, registros de usuarios, creación/eliminación de notas,
   accesos denegados y errores CSRF.

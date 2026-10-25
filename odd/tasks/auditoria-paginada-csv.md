@@ -30,14 +30,15 @@ S6. `admin.php` conserva un resumen de los últimos 15 eventos con un enlace a l
 
 ## Tasks
 
-- [ ] T1. `listar_auditoria()` en `includes/functions.php` + tests unitarios de
-      paginación, filtros y saneamiento. (S3)
-- [ ] T2. `auditoria.php`: listado paginado con filtros, navegación y resumen.
-      (S2, S3)
-- [ ] T3. Exportación CSV: `campo_csv()`, `filas_para_csv()` y el endpoint de
-      descarga, con escape anti-fórmula y auditoría del evento. (S4, S5)
-- [ ] T4. Enlace en el menú y en `admin.php`, documentación y verificación
-      final. (S2, S6)
+- [x] T1. `listar_auditoria()` en `includes/functions.php` + tests unitarios de
+      paginación, filtros y saneamiento. (S3) — commit `ad59937`
+- [x] T2. `auditoria.php`: listado paginado con filtros, navegación y resumen.
+      (S2, S3) — commit `ad59937`
+- [x] T3. Exportación CSV: `campo_csv()`, `linea_csv()`,
+      `filas_auditoria_para_csv()` y `auditoria_csv.php`, con escape anti-fórmula
+      y auditoría del evento. (S4, S5) — commit `e269f23`
+- [x] T4. Enlace en el menú y en `admin.php`, suite en CI, documentación y
+      verificación final. (S2, S6) — commit del slice 3
 
 ## Log
 
