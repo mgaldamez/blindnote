@@ -118,6 +118,7 @@ WEB_PORT=8080
 | `MYSQL_ROOT_PASSWORD` | `root` | Contraseña de root **del contenedor** |
 | `COOKIE_SOLO_HTTPS` | `false` | Cookie de sesión sólo por HTTPS |
 | `MODO_DEBUG` | `true` | Detalle de errores (en producción: `false`) |
+| `MAX_INTENTOS_POR_IP` | `20` | Fallos por IP (15 min) antes de bloquear; `0` deshabilita |
 
 Esos valores son los que el código tiene quemados hoy: dejarlos igual reproduce
 el comportamiento actual.
@@ -253,7 +254,9 @@ docker compose exec web php tests/fuerza-bruta-test.php
 Verifica que el bloqueo sea **por cuenta e IP**: 5 fallos con nombres ajenos
 desde una misma IP no bloquean a un usuario legítimo, 5 fallos propios sí lo
 bloquean, los fallos de otra IP o fuera de la ventana de 15 minutos no cuentan,
-y el usuario y el correo de la misma cuenta comparten un único contador.
+el usuario y el correo de la misma cuenta comparten un único contador, y el
+tope secundario por IP corta el *password spraying* sin bloquear a una cuenta
+que no acumuló fallos propios.
 
 ## 7. Fase 5 — Política de seguridad
 

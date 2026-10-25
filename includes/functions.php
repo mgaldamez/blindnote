@@ -303,3 +303,29 @@ function intentos_fallidos_recientes(array $identificadores, string $ip): int
 
     return (int) ($stmt->fetch()['total'] ?? 0);
 }
+
+/**
+ * Cuenta TODOS los fallos recientes de una IP, sin importar la cuenta.
+ *
+ * Es el tope secundario contra password spraying: si el limite fuera solo por
+ * cuenta, un atacante podria probar la misma contrasena contra infinitos
+ * usuarios desde una sola IP sin gastar el balde de ninguno.
+ *
+ * El umbral (MAX_INTENTOS_POR_IP) es mucho mas alto que el de cuenta para no
+ * volver al problema de bloquear a todos los usuarios detras de un NAT.
+ */
+function intentos_fallidos_por_ip(string $ip): int
+{
+    $stmt = db()->prepare(
+        'SELECT COUNT(*) AS total
+           FROM intentos_login
+          WHERE ip = :ip
+            AND exitoso = 0
+            AND fecha > (NOW() - INTERVAL :minutos MINUTE)'
+    );
+    $stmt->bindValue(':ip', $ip);
+    $stmt->bindValue(':minutos', MINUTOS_BLOQUEO, PDO::PARAM_INT);
+    $stmt->execute();
+
+    return (int) ($stmt->fetch()['total'] ?? 0);
+}

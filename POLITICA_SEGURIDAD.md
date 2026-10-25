@@ -152,10 +152,15 @@ seguridad.
 - Mensajes de error genéricos para no revelar si la cuenta existe.
 - Registro de cada intento en `intentos_login` y de cada bloqueo en
   `logs_auditoria`.
-- Límite conocido: al ser por usuario **e** IP, un atacante que rote nombres
-  de usuario desde una misma IP solo se bloquea cuenta por cuenta. En
-  producción se recomienda añadir un segundo límite más alto por IP (por
-  ejemplo 20 fallos / 15 minutos) para frenar el *password spraying*.
+- El conteo es por **cuenta** (usuario o correo) e IP: los dos alias de la
+  misma cuenta comparten un único contador, de modo que alternarlos no duplica
+  los intentos.
+- Tope secundario por IP para frenar el *password spraying*: 20 fallos en 15
+  minutos desde una misma IP bloquean temporalmente los intentos de login de
+  esa IP, aunque cada cuenta tenga su propio contador. Es configurable con
+  `MAX_INTENTOS_POR_IP` (`0` lo deshabilita). Al ser más alto que el de cuenta,
+  no reproduce el bloqueo masivo detrás de un NAT, pero conviene vigilarlo
+  cuando muchos usuarios comparten salida a Internet.
 - Se recomienda **2FA** para el rol administrador.
 
 ### 7.5 Recuperación de contraseña

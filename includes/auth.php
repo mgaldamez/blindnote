@@ -61,13 +61,22 @@ function autenticar(string $username, string $password): array
     $usuario = $stmt->fetch();
 
     // 2) Control de fuerza bruta ANTES de comprobar credenciales, agrupando
-    //    todos los identificadores de la cuenta (usuario y correo).
+    //    todos los identificadores de la cuenta (usuario y correo) y con un
+    //    tope secundario por IP contra el password spraying.
     $identificadores = $usuario
         ? [(string) $usuario['username'], (string) $usuario['email']]
         : [$username];
-    $fallidos = intentos_fallidos_recientes($identificadores, ip_cliente());
-    if ($fallidos >= MAX_INTENTOS_FALLIDOS) {
-        registrar_auditoria(null, 'CUENTA_BLOQUEADA', "Demasiados intentos para: $username");
+    $fallidosCuenta = intentos_fallidos_recientes($identificadores, ip_cliente());
+    $fallidosIp = MAX_INTENTOS_POR_IP > 0 ? intentos_fallidos_por_ip(ip_cliente()) : 0;
+
+    $bloqueadoPorCuenta = $fallidosCuenta >= MAX_INTENTOS_FALLIDOS;
+    $bloqueadoPorIp = MAX_INTENTOS_POR_IP > 0 && $fallidosIp >= MAX_INTENTOS_POR_IP;
+
+    if ($bloqueadoPorCuenta || $bloqueadoPorIp) {
+        // El detalle interno dice cual limite se alcanzo; al usuario se le
+        // responde siempre lo mismo.
+        $motivo = $bloqueadoPorCuenta ? 'limite por cuenta' : 'limite por IP';
+        registrar_auditoria(null, 'CUENTA_BLOQUEADA', "Demasiados intentos para: $username ($motivo)");
         return [
             'ok' => false,
             'mensaje' => 'Demasiados intentos fallidos. Intentalo de nuevo en '
@@ -118,8 +127,9 @@ function autenticar(string $username, string $password): array
     $_SESSION['user_agent']       = $_SERVER['HTTP_USER_AGENT'] ?? '';
     $_SESSION['ip']               = ip_cliente();
 
-    // 7) Registros: ultimo login + auditoria + intento exitoso.
-    db()->prepare('UPDATE usuarios SET ultimo_login = NOW(), intentos_fallidos = 0, bloqueado_hasta = NULL WHERE id = :id')
+    // 7) Registros: ultimo login + auditoria + intento exitoso. El conteo de
+    //    fuerza bruta vive solo en intentos_login.
+    db()->prepare('UPDATE usuarios SET ultimo_login = NOW() WHERE id = :id')
         ->execute([':id' => $usuario['id']]);
     registrar_intento_login($username, true);
     registrar_auditoria((int) $usuario['id'], 'LOGIN_OK', 'Inicio de sesion correcto');

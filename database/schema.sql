@@ -27,8 +27,6 @@ CREATE TABLE IF NOT EXISTS usuarios (
     password_hash     VARCHAR(255)  NOT NULL,
     rol               ENUM('admin','usuario') NOT NULL DEFAULT 'usuario',
     activo            TINYINT(1)    NOT NULL DEFAULT 1,
-    intentos_fallidos INT UNSIGNED  NOT NULL DEFAULT 0,
-    bloqueado_hasta   DATETIME      NULL,
     ultimo_login      DATETIME      NULL,
     creado_en         TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     actualizado_en    TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

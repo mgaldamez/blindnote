@@ -42,7 +42,11 @@ define('DB_CHARSET', env_valor('DB_CHARSET', 'utf8mb4'));
 
 /* ------------------------- Seguridad -------------------------- */
 // Control de fuerza bruta
+// Bloqueo por cuenta e IP (usuario o correo).
 define('MAX_INTENTOS_FALLIDOS', 5);      // intentos antes de bloquear
+// Tope secundario por IP: frena el password spraying (rotar cuentas desde una
+// misma IP). 0 lo deshabilita. OJO: detras de un NAT todos comparten IP.
+define('MAX_INTENTOS_POR_IP', max(0, (int) env_valor('MAX_INTENTOS_POR_IP', '20')));
 define('MINUTOS_BLOQUEO', 15);           // duracion del bloqueo
 
 // Sesiones

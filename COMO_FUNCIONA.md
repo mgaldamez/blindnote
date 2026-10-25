@@ -346,7 +346,7 @@ archivos de configuración.
 ```text
 usuarios
   id, nombre, email, username, password_hash, rol, activo,
-  intentos_fallidos, bloqueado_hasta, ultimo_login,
+  ultimo_login,
   creado_en, actualizado_en
 
 notas

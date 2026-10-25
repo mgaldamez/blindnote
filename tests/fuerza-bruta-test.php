@@ -212,6 +212,58 @@ comprobar(
 $r = autenticar($usuario, CLAVE);
 comprobar('el usuario escrito tambien queda bloqueado', 1, $r['ok'] ? 0 : 1);
 
+/* ---------------- S3: tope secundario por IP ---------------- */
+
+// Un login correcto sigue registrando ultimo_login (la actualizacion se toco
+// al retirar las columnas muertas).
+limpiar();
+db()->prepare('UPDATE usuarios SET ultimo_login = NULL WHERE username = :u')->execute([':u' => $usuario]);
+$r = autenticar($usuario, CLAVE);
+comprobar('un login correcto actualiza ultimo_login', 1, ($r['ok'] && db()->query(
+    "SELECT ultimo_login FROM usuarios WHERE username = " . db()->quote($usuario)
+)->fetch()['ultimo_login'] !== null) ? 1 : 0);
+
+if (MAX_INTENTOS_POR_IP > 0) {
+    // Fallos repartidos en cuentas distintas desde la misma IP alcanzan el tope.
+    limpiar();
+    for ($i = 0; $i < MAX_INTENTOS_POR_IP; $i++) {
+        sembrar(PREFIJO . 'spray' . $i, IP_A, false);
+    }
+    comprobar(
+        'el tope por IP suma fallos de cuentas distintas',
+        MAX_INTENTOS_POR_IP,
+        intentos_fallidos_por_ip(IP_A)
+    );
+    comprobar(
+        'los fallos de otra IP no cuentan para el tope',
+        0,
+        intentos_fallidos_por_ip(IP_B)
+    );
+
+    // Con el tope alcanzado, una cuenta sin fallos propios tampoco entra.
+    limpiar();
+    for ($i = 0; $i < MAX_INTENTOS_POR_IP; $i++) {
+        sembrar(PREFIJO . 'spray' . $i, '0.0.0.0', false);
+    }
+    $r = autenticar($correo, CLAVE);
+    comprobar('el tope por IP bloquea aunque la cuenta no tenga fallos', 1, $r['ok'] ? 0 : 1);
+    comprobar(
+        'el mensaje sigue siendo el generico de bloqueo',
+        1,
+        str_contains($r['mensaje'], 'Demasiados intentos fallidos') ? 1 : 0
+    );
+
+    // Un fallo menos que el tope todavia deja entrar.
+    limpiar();
+    for ($i = 0; $i < MAX_INTENTOS_POR_IP - 1; $i++) {
+        sembrar(PREFIJO . 'spray' . $i, '0.0.0.0', false);
+    }
+    $r = autenticar($correo, CLAVE);
+    comprobar('con un fallo menos que el tope la cuenta entra', 1, $r['ok'] ? 1 : 0);
+} else {
+    echo "  SKIP tope por IP deshabilitado (MAX_INTENTOS_POR_IP = 0)\n";
+}
+
 /* ---------------- Limpieza ---------------- */
 
 limpiar();
