@@ -1,8 +1,12 @@
 # Integración continua de BlindNote.
 #
-# 1) checks  — construye la imagen con docker compose, valida la sintaxis de
-#    todos los PHP y corre la regresión del control de fuerza bruta contra una
-#    base MySQL real. Se ejecuta en cada push y en cada pull request.
+# docker-compose.yml consume la imagen publicada; docker-compose.dev.yml es el
+# override que construye desde el Dockerfile. Estos jobs usan los dos vía
+# COMPOSE_FILE, así validan el commit pusheado y no la imagen publicada.
+#
+# 1) checks  — construye la imagen, valida la sintaxis de todos los PHP y corre
+#    la regresión del control de fuerza bruta contra una base MySQL real. Se
+#    ejecuta en cada push y en cada pull request.
 # 2) publish — sólo en push a main o en tags vX.Y.Z: publica la imagen en
 #    GitHub Container Registry (ghcr.io/<usuario>/blindnote).
 #
@@ -27,6 +31,8 @@ concurrency:
 env:
   # ghcr.io exige un nombre en minúsculas; el repositorio ya lo está.
   IMAGE: ghcr.io/${{ github.repository }}
+  # Construir desde el commit, no consumir la imagen publicada.
+  COMPOSE_FILE: docker-compose.yml:docker-compose.dev.yml
 
 jobs:
   checks:

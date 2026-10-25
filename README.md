@@ -61,8 +61,19 @@ Tercer Parcial.
 Requiere **Docker Desktop** (con Docker Compose). El esquema de la base de datos
 se importa automáticamente la primera vez que se crea el contenedor de MySQL.
 
+**Usar la imagen publicada** (recomendado para probar, no requiere clonar el
+código ni construir nada):
+
 ```bash
-docker compose up -d --build
+docker compose up -d            # baja ghcr.io/mgaldamez/blindnote:latest
+docker compose pull && docker compose up -d   # trae la última publicada
+```
+
+**Construir desde el código fuente** (desarrollo y CI, usa
+`docker-compose.dev.yml` como override):
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
 ```
 
 Abre `http://localhost:8080/`. Para detenerlo:
@@ -79,7 +90,8 @@ docker compose down -v
 
 La configuración se pasa por variables de entorno (`DB_HOST`, `DB_USUARIO`,
 `DB_CLAVE`, `MODO_DEBUG`, etc.) definidas en `docker-compose.yml`; `config.php`
-usa esos valores y, si no existen, mantiene los de Laragon.
+usa esos valores y, si no existen, mantiene los de Laragon. Para fijar una
+versión concreta de la imagen: `BLINDNOTE_TAG=sha-abc1234 docker compose up -d`.
 
 ### Configuración de la base de datos
 
@@ -146,6 +158,8 @@ seguridad-web/
 │  ├─ header.php / footer.php
 ├─ assets/css/estilos.css
 ├─ database/schema.sql     Esquema de la base de datos
+├─ docker-compose.yml      Stack desde la imagen publicada (GHCR)
+├─ docker-compose.dev.yml  Override que construye desde el Dockerfile
 ├─ tests/
 │  └─ fuerza-bruta-test.php  Regresión del bloqueo por usuario e IP
 ├─ .github/workflows/ci.yml  Integración continua: build, checks y publicación
@@ -243,8 +257,10 @@ certificado (válido o autofirmado):
 
 El workflow `.github/workflows/ci.yml` corre en cada **push** y **pull request**:
 
-1. Construye la imagen con `docker compose up --build --wait` (levanta MySQL y
-   espera el *healthcheck*).
+1. Construye la imagen con `docker compose up --build --wait` usando
+   `docker-compose.yml` + `docker-compose.dev.yml` (variable `COMPOSE_FILE`),
+   así valida el commit pusheado y no la imagen publicada, y espera el
+   *healthcheck* de MySQL.
 2. Comprueba con `curl` que `login.php` responda **HTTP 200** desde el runner
    (`web` no define healthcheck, así que `--wait` no prueba que Apache sirva la
    aplicación).

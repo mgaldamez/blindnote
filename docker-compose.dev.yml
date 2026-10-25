@@ -1,0 +1,13 @@
+# Override de desarrollo: construye la imagen desde el Dockerfile del repo en
+# lugar de usar la publicada, y la etiqueta con el mismo nombre.
+#
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
+#
+# El CI usa este override (COMPOSE_FILE en .github/workflows/ci.yml), así valida
+# el commit que se pushea y no la imagen publicada.
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile

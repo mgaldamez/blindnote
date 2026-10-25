@@ -1,6 +1,18 @@
+# BlindNote — ejecución desde la imagen publicada.
+#
+#   docker compose up -d              # usa ghcr.io/mgaldamez/blindnote:latest
+#   docker compose pull && docker compose up -d   # trae la última publicada
+#   BLINDNOTE_TAG=sha-abc1234 docker compose up -d # fija una versión
+#
+# Para construir desde el código fuente (desarrollo y CI) usa el override:
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
+#
+# El esquema se inicializa solo: MySQL ejecuta database/schema.sql la primera
+# vez que se crea el volumen db_data.
+
 services:
   web:
-    build: .
+    image: ghcr.io/mgaldamez/blindnote:${BLINDNOTE_TAG:-latest}
     ports:
       - "8080:80"
     environment:
@@ -11,8 +23,6 @@ services:
       DB_CLAVE: blindnote
       COOKIE_SOLO_HTTPS: "false"
       MODO_DEBUG: "true"
-    volumes:
-      - .:/var/www/html
     depends_on:
       db:
         condition: service_healthy
