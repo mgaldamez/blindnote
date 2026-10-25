@@ -152,6 +152,10 @@ seguridad.
 - Mensajes de error genéricos para no revelar si la cuenta existe.
 - Registro de cada intento en `intentos_login` y de cada bloqueo en
   `logs_auditoria`.
+- Límite conocido: al ser por usuario **e** IP, un atacante que rote nombres
+  de usuario desde una misma IP solo se bloquea cuenta por cuenta. En
+  producción se recomienda añadir un segundo límite más alto por IP (por
+  ejemplo 20 fallos / 15 minutos) para frenar el *password spraying*.
 - Se recomienda **2FA** para el rol administrador.
 
 ### 7.5 Recuperación de contraseña

@@ -146,6 +146,8 @@ seguridad-web/
 │  ├─ header.php / footer.php
 ├─ assets/css/estilos.css
 ├─ database/schema.sql     Esquema de la base de datos
+├─ tests/
+│  └─ fuerza-bruta-test.php  Regresión del bloqueo por usuario e IP
 └─ .htaccess               Cabeceras de seguridad y protección de carpetas
 ```
 
@@ -187,6 +189,17 @@ Pruebas manuales sugeridas:
 
 Para obtener la evidencia completa, ejecuta OWASP ZAP o Nikto contra el sitio y
 adjunta el reporte o las capturas al informe.
+
+Prueba automatizada del control de fuerza bruta (regresión de "todos los
+usuarios quedan bloqueados"):
+
+```bash
+docker compose exec web php tests/fuerza-bruta-test.php
+```
+
+Verifica que el bloqueo sea **por usuario e IP**: 5 fallos con nombres ajenos
+desde una misma IP no bloquean a un usuario legítimo, 5 fallos propios sí lo
+bloquean, y los fallos de otra IP o fuera de la ventana de 15 minutos no cuentan.
 
 ## 7. Fase 5 — Política de seguridad
 

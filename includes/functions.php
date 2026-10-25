@@ -251,14 +251,22 @@ function registrar_intento_login(string $username, bool $exitoso): void
 }
 
 /**
- * Cuenta intentos fallidos recientes (por usuario + IP) para aplicar bloqueo.
+ * Cuenta intentos fallidos recientes para aplicar el bloqueo temporal.
+ *
+ * Politica (POLITICA_SEGURIDAD.md): 5 intentos fallidos en 15 minutos
+ * POR USUARIO **E** IP. La condicion es conjuntiva (AND): los fallos de
+ * otros usuarios desde la misma IP no deben bloquear a un usuario legitimo
+ * que comparte esa IP (NAT, proxy inverso, laboratorio con ZAP en el mismo
+ * host). Con OR, cualquier IP acumulaba un unico balde global y cinco fallos
+ * de nombres ajenos bloqueaban a todos los usuarios de esa IP.
  */
 function intentos_fallidos_recientes(string $username, string $ip): int
 {
     $stmt = db()->prepare(
         'SELECT COUNT(*) AS total
            FROM intentos_login
-          WHERE (username = :username OR ip = :ip)
+          WHERE username = :username
+            AND ip = :ip
             AND exitoso = 0
             AND fecha > (NOW() - INTERVAL :minutos MINUTE)'
     );
