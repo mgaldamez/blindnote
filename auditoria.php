@@ -39,6 +39,13 @@ $enlace = static function (array $extra = []) use ($filtros): string {
 
 $enlacePagina = static fn (int $numero): string => $enlace(['pagina' => (string) $numero]);
 
+// Mismos filtros, sin paginar, para la descarga.
+$enlaceCsv = static function () use ($filtros): string {
+    $parametros = array_filter($filtros, static fn (string $valor): bool => $valor !== '');
+
+    return 'auditoria_csv.php' . ($parametros === [] ? '' : '?' . http_build_query($parametros));
+};
+
 $acciones = acciones_auditoria();
 $usuariosAuditados = usuarios_auditoria();
 
@@ -53,6 +60,9 @@ require __DIR__ . '/includes/header.php';
 <div class="tarjeta">
     <div class="tarjeta__cabecera">
         <h2>Eventos (<?= (int) $total ?>)</h2>
+        <?php if ($total > 0): ?>
+            <a class="btn" href="<?= e($enlaceCsv()) ?>">Exportar CSV</a>
+        <?php endif; ?>
     </div>
 
     <form method="get" action="auditoria.php" class="filtros">

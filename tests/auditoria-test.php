@@ -177,6 +177,35 @@ comprobar(
         && array_key_exists('username', $fila)) ? 1 : 0
 );
 
+/* ---------------- S5: exportacion CSV ---------------- */
+
+comprobar('un valor simple queda igual', 1, campo_csv('simple') === 'simple' ? 1 : 0);
+comprobar('una coma se entrecomilla', 1, campo_csv('con,coma') === '"con,coma"' ? 1 : 0);
+comprobar('las comillas se duplican', 1, campo_csv('di "hola"') === '"di ""hola"""' ? 1 : 0);
+comprobar('un salto de linea se entrecomilla', 1, campo_csv("dos\nlineas") === '"dos' . "\n" . 'lineas"' ? 1 : 0);
+comprobar('una formula con = se neutraliza', 1, campo_csv('=1+1') === "'=1+1" ? 1 : 0);
+comprobar('una formula con + se neutraliza', 1, campo_csv('+SUM(A1)') === "'+SUM(A1)" ? 1 : 0);
+comprobar('una formula con - se neutraliza', 1, campo_csv('-2+3') === "'-2+3" ? 1 : 0);
+comprobar('una formula con @ se neutraliza', 1, campo_csv('@cmd') === "'@cmd" ? 1 : 0);
+comprobar('un tab inicial se neutraliza', 1, campo_csv("\t=cmd") === "'\t=cmd" ? 1 : 0);
+comprobar('un guion en el medio no se toca', 1, campo_csv('a-b') === 'a-b' ? 1 : 0);
+comprobar('la linea une campos y cierra con salto', 1, linea_csv(['a', 'b,c']) === "a,\"b,c\"\n" ? 1 : 0);
+
+$filasCsv = filas_auditoria_para_csv(['accion' => ACCION_A]);
+comprobar('la exportacion trae todas las filas del filtro', 24, count($filasCsv));
+comprobar(
+    'la exportacion trae las columnas del CSV',
+    1,
+    (array_key_exists('fecha', $filasCsv[0]) && array_key_exists('username', $filasCsv[0])
+        && array_key_exists('accion', $filasCsv[0]) && array_key_exists('detalle', $filasCsv[0])
+        && array_key_exists('ip', $filasCsv[0])) ? 1 : 0
+);
+comprobar(
+    'un detalle con formula queda neutralizado en la linea',
+    1,
+    (linea_csv(['x', '=cmd']) === "x,'=cmd\n") ? 1 : 0
+);
+
 limpiar_auditoria();
 echo $fallos === 0 ? "TODO OK\n" : "$fallos caso(s) con falla\n";
 exit($fallos === 0 ? 0 : 1);

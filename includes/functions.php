@@ -400,19 +400,14 @@ function fecha_valida(string $valor): ?string
 }
 
 /**
- * Lista la auditoria con filtros y paginacion.
- *
- * Filtros: accion (coincidencia exacta), usuario (nombre exacto o
- * `__anonimo__` para los eventos sin usuario) y desde/hasta (fechas Y-m-d,
- * ambas inclusive). Los valores invalidos se ignoran.
+ * Construye el WHERE de la auditoria a partir de los filtros.
+ * Los valores invalidos se ignoran y todo se pasa como parametro ligado.
  *
  * @param array{accion?:string, usuario?:string, desde?:string, hasta?:string} $filtros
- * @return array{total:int, filas:list<array<string,mixed>>, pagina:int, porPagina:int, totalPaginas:int}
+ * @return array{where:string, parametros:array<string,string>}
  */
-function listar_auditoria(array $filtros, int $pagina = 1, int $porPagina = AUDITORIA_POR_PAGINA): array
+function condiciones_auditoria(array $filtros): array
 {
-    $porPagina = max(1, $porPagina);
-
     $condiciones = [];
     $parametros  = [];
 
@@ -442,7 +437,85 @@ function listar_auditoria(array $filtros, int $pagina = 1, int $porPagina = AUDI
         $parametros[':hasta'] = $hasta . ' 23:59:59';
     }
 
-    $where = $condiciones === [] ? '' : ' WHERE ' . implode(' AND ', $condiciones);
+    return [
+        'where'      => $condiciones === [] ? '' : ' WHERE ' . implode(' AND ', $condiciones),
+        'parametros' => $parametros,
+    ];
+}
+
+/**
+ * Prepara una celda para CSV.
+ *
+ * Neutraliza las formulas: una celda que empieza con =, +, -, @, tab o CR puede
+ * ser ejecutada por la planilla (CSV injection), asi que se antepone un
+ * apostrofo. Un numero negativo tambien lo lleva: es el precio de no poder
+ * distinguirlo de una formula.
+ * Entrecomilla cuando el valor trae coma, comilla o salto de linea, y duplica
+ * las comillas internas (RFC 4180).
+ */
+function campo_csv(string $valor): string
+{
+    if ($valor !== '' && strpbrk($valor[0], "=+-@\t\r") !== false) {
+        $valor = "'" . $valor;
+    }
+
+    if (strpbrk($valor, ",\"\n\r") !== false) {
+        $valor = '"' . str_replace('"', '""', $valor) . '"';
+    }
+
+    return $valor;
+}
+
+/**
+ * Arma una linea CSV (con salto de linea final) a partir de los campos.
+ *
+ * @param list<string|int|null> $campos
+ */
+function linea_csv(array $campos): string
+{
+    $celdas = array_map(
+        static fn ($valor): string => campo_csv((string) ($valor ?? '')),
+        $campos
+    );
+
+    return implode(',', $celdas) . "\n";
+}
+
+/**
+ * Filas de auditoria que el filtro selecciona, sin paginar, para exportar.
+ *
+ * @param array{accion?:string, usuario?:string, desde?:string, hasta?:string} $filtros
+ * @return list<array<string,mixed>>
+ */
+function filas_auditoria_para_csv(array $filtros): array
+{
+    ['where' => $where, 'parametros' => $parametros] = condiciones_auditoria($filtros);
+
+    $stmt = db()->prepare(
+        'SELECT l.fecha, u.username, l.accion, l.detalle, l.ip
+           FROM logs_auditoria l LEFT JOIN usuarios u ON u.id = l.usuario_id'
+        . $where
+        . ' ORDER BY l.id DESC'
+    );
+    $stmt->execute($parametros);
+
+    return $stmt->fetchAll();
+}
+
+/**
+ * Lista la auditoria con filtros y paginacion.
+ *
+ * Filtros: accion (coincidencia exacta), usuario (nombre exacto o
+ * `__anonimo__` para los eventos sin usuario) y desde/hasta (fechas Y-m-d,
+ * ambas inclusive). Los valores invalidos se ignoran.
+ *
+ * @param array{accion?:string, usuario?:string, desde?:string, hasta?:string} $filtros
+ * @return array{total:int, filas:list<array<string,mixed>>, pagina:int, porPagina:int, totalPaginas:int}
+ */
+function listar_auditoria(array $filtros, int $pagina = 1, int $porPagina = AUDITORIA_POR_PAGINA): array
+{
+    $porPagina = max(1, $porPagina);
+    ['where' => $where, 'parametros' => $parametros] = condiciones_auditoria($filtros);
     $tablas = ' FROM logs_auditoria l LEFT JOIN usuarios u ON u.id = l.usuario_id';
 
     $stmt = db()->prepare('SELECT COUNT(*) AS total' . $tablas . $where);
