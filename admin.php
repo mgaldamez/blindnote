@@ -226,7 +226,10 @@ $mensajesAviso = [
 </div>
 
 <div class="tarjeta">
-    <h2>Auditoria reciente</h2>
+    <div class="tarjeta__cabecera">
+        <h2>Auditoria reciente</h2>
+        <a class="btn" href="auditoria.php">Ver toda la auditoria</a>
+    </div>
     <div class="tabla-wrap">
         <table class="tabla">
             <thead>

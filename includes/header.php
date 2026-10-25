@@ -27,6 +27,7 @@ $paginaActual = basename($_SERVER['PHP_SELF'] ?? '');
                 <a class="<?= $paginaActual === 'notas.php' ? 'activo' : '' ?>" href="notas.php">Notas</a>
                 <?php if (($_SESSION['rol'] ?? '') === 'admin'): ?>
                     <a class="<?= $paginaActual === 'admin.php' ? 'activo' : '' ?>" href="admin.php">Admin</a>
+                    <a class="<?= $paginaActual === 'auditoria.php' ? 'activo' : '' ?>" href="auditoria.php">Auditoria</a>
                 <?php endif; ?>
                 <a class="<?= $paginaActual === 'informe_fase4.php' ? 'activo' : '' ?>" href="informe_fase4.php">Fase 4</a>
                 <span class="nav__usuario"><?= e($_SESSION['nombre'] ?? '') ?>

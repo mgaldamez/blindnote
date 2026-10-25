@@ -61,6 +61,7 @@ define('PASS_MIN_LEN', 8);
 
 // Administracion
 define('USUARIOS_POR_PAGINA', 10);       // filas por pagina en el listado de usuarios
+define('AUDITORIA_POR_PAGINA', 20);      // filas por pagina en la auditoria
 
 /* ------------------------- Entorno ---------------------------- */
 // true = cookies solo por HTTPS (activalo cuando uses el certificado de Fase 2)

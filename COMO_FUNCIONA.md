@@ -246,6 +246,21 @@ Páginas protegidas:
 Aunque un usuario escriba la URL de `admin.php`, el servidor vuelve a comprobar
 el rol. Ocultar el enlace en el menú no se considera un control suficiente.
 
+### 8.4 Auditoría y exportación CSV
+
+- `auditoria.php` (solo `admin`): 20 eventos por página con filtros por acción,
+  usuario (incluye los eventos sin usuario) y rango de fechas inclusivo. La
+  consulta vive en `listar_auditoria()` y se arma con sentencias preparadas.
+- `auditoria_csv.php` exporta **todas** las filas del filtro (no solo la página)
+  con `Content-Type: text/csv`, `Content-Disposition: attachment` y un nombre de
+  archivo generado por el servidor (`auditoria-AAAAMMDD-HHMM.csv`).
+- `campo_csv()` evita *CSV injection*: si una celda empieza con `=`, `+`, `-`,
+  `@`, tab o CR se antepone un apóstrofo, y se entrecomilla según RFC 4180 cuando
+  trae coma, comilla o salto de línea. El costo: un número negativo también
+  queda con apóstrofo.
+- La exportación se registra como `AUDITORIA_EXPORTADA`, así queda evidencia de
+  quién bajó el log y con qué filtros.
+
 ## 9. Notas personales y anti-IDOR
 
 `notas.php` permite crear y eliminar notas. Cada operación usa el ID de la
