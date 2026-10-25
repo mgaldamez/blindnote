@@ -200,6 +200,7 @@ seguridad-web/
 ├─ tests/
 │  └─ fuerza-bruta-test.php  Regresión del bloqueo por usuario e IP
 ├─ .github/workflows/ci.yml  Integración continua: build, checks y publicación
+├─ deploy/nginx.conf.example  Proxy inverso de referencia (solo 443)
 └─ .htaccess               Cabeceras de seguridad y protección de carpetas
 ```
 
@@ -330,7 +331,46 @@ usa el `docker-compose.yml` del repositorio para levantar el par completo.
 > El paquete de GHCR se crea **privado**. Para hacerlo público: perfil →
 > Packages → `blindnote` → Package settings → Change visibility.
 
-## 10. Aviso
+## 10. Despliegue en un VPS (Docker + nginx)
+
+Modelo de referencia, con la app publicada **solo en loopback** y el sitio
+servido **únicamente por 443** (el puerto 80 no se expone):
+
+1. En el servidor, clonar y configurar:
+   ```bash
+   git clone https://github.com/mgaldamez/blindnote.git && cd blindnote
+   cp .env.example .env
+   ```
+2. Ajustar el `.env` de producción:
+   ```ini
+   WEB_PORT=127.0.0.1:8080   # nunca 0.0.0.0: expondria la app sin TLS
+   MODO_DEBUG=false
+   COOKIE_SOLO_HTTPS=true
+   DB_CLAVE=<clave fuerte>
+   MYSQL_ROOT_PASSWORD=<clave fuerte>
+   BLINDNOTE_TAG=v1.0.0      # tag fijo, no latest
+   ```
+3. Levantar (la imagen viene de GHCR, el código PHP no se copia al servidor):
+   ```bash
+   docker compose pull && docker compose up -d
+   ```
+4. Proxy y TLS: copiar **`deploy/nginx.conf.example`** a
+   `/etc/nginx/sites-available/blindnote`, cambiar el dominio y recargar.
+   Sin puerto 80, el certificado se renueva con **DNS-01** o TLS-ALPN-01.
+5. Firewall: permitir 22 y 443; el 8080 no se abre.
+
+Comprobaciones:
+
+```bash
+ss -ltnp | grep 8080              # debe decir 127.0.0.1:8080
+curl -sI https://<dominio> | grep -iE 'strict-transport|server:|http/'
+docker compose exec -T db mysqldump -uroot -p"$MYSQL_ROOT_PASSWORD" seguridad_web > respaldo.sql
+```
+
+> El esquema se importa solo la primera vez que se crea el volumen `db_data`;
+> al restaurar un respaldo no se vuelve a ejecutar `database/schema.sql`.
+
+## 11. Aviso
 
 Proyecto **académico**. Ejecuta esta aplicación solo en un entorno local o de
 demostración. No la expongas a Internet sin HTTPS, sin revisar la política de
