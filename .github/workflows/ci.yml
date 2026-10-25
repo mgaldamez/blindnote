@@ -40,6 +40,22 @@ jobs:
       - name: Construir y levantar el stack
         run: docker compose up --detach --build --wait
 
+      # `web` no declara healthcheck, así que `--wait` no prueba que Apache sirva
+      # la aplicación: este smoke comprueba la respuesta HTTP real.
+      - name: Smoke HTTP del formulario de login
+        run: |
+          set -euo pipefail
+          for intento in $(seq 1 15); do
+            codigo=$(curl -sS -o /dev/null -w '%{http_code}' http://localhost:8080/login.php || true)
+            if [ "$codigo" = "200" ]; then
+              echo "GET /login.php -> 200 (intento $intento)"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "::error::GET /login.php no respondió 200 (último código: ${codigo:-sin respuesta})"
+          exit 1
+
       - name: Lint de todos los archivos PHP
         run: >-
           docker compose exec --no-TTY web

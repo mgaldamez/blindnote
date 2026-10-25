@@ -245,8 +245,11 @@ El workflow `.github/workflows/ci.yml` corre en cada **push** y **pull request**
 
 1. Construye la imagen con `docker compose up --build --wait` (levanta MySQL y
    espera el *healthcheck*).
-2. Ejecuta `php -l` sobre todos los archivos PHP.
-3. Corre la regresión del control de fuerza bruta (`tests/fuerza-bruta-test.php`)
+2. Comprueba con `curl` que `login.php` responda **HTTP 200** desde el runner
+   (`web` no define healthcheck, así que `--wait` no prueba que Apache sirva la
+   aplicación).
+3. Ejecuta `php -l` sobre todos los archivos PHP.
+4. Corre la regresión del control de fuerza bruta (`tests/fuerza-bruta-test.php`)
    contra la base real, y baja el stack al terminar.
 
 En push a `main` (o en un tag `vX.Y.Z`) además publica la imagen en GitHub
