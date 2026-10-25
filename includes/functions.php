@@ -384,6 +384,131 @@ function listar_usuarios(array $filtros, int $pagina = 1, int $porPagina = USUAR
 }
 
 /**
+ * Devuelve la fecha en formato Y-m-d si el valor es una fecha valida.
+ * Se usa para los filtros de fecha y evita inyectar valores raros.
+ */
+function fecha_valida(string $valor): ?string
+{
+    $valor = trim($valor);
+    if ($valor === '') {
+        return null;
+    }
+
+    $fecha = DateTimeImmutable::createFromFormat('!Y-m-d', $valor);
+
+    return ($fecha !== false && $fecha->format('Y-m-d') === $valor) ? $valor : null;
+}
+
+/**
+ * Lista la auditoria con filtros y paginacion.
+ *
+ * Filtros: accion (coincidencia exacta), usuario (nombre exacto o
+ * `__anonimo__` para los eventos sin usuario) y desde/hasta (fechas Y-m-d,
+ * ambas inclusive). Los valores invalidos se ignoran.
+ *
+ * @param array{accion?:string, usuario?:string, desde?:string, hasta?:string} $filtros
+ * @return array{total:int, filas:list<array<string,mixed>>, pagina:int, porPagina:int, totalPaginas:int}
+ */
+function listar_auditoria(array $filtros, int $pagina = 1, int $porPagina = AUDITORIA_POR_PAGINA): array
+{
+    $porPagina = max(1, $porPagina);
+
+    $condiciones = [];
+    $parametros  = [];
+
+    $accion = trim((string) ($filtros['accion'] ?? ''));
+    if ($accion !== '') {
+        $condiciones[] = 'l.accion = :accion';
+        $parametros[':accion'] = $accion;
+    }
+
+    $usuario = trim((string) ($filtros['usuario'] ?? ''));
+    if ($usuario === '__anonimo__') {
+        $condiciones[] = 'l.usuario_id IS NULL';
+    } elseif ($usuario !== '') {
+        $condiciones[] = 'u.username = :usuario';
+        $parametros[':usuario'] = $usuario;
+    }
+
+    $desde = fecha_valida((string) ($filtros['desde'] ?? ''));
+    if ($desde !== null) {
+        $condiciones[] = 'l.fecha >= :desde';
+        $parametros[':desde'] = $desde . ' 00:00:00';
+    }
+
+    $hasta = fecha_valida((string) ($filtros['hasta'] ?? ''));
+    if ($hasta !== null) {
+        $condiciones[] = 'l.fecha <= :hasta';
+        $parametros[':hasta'] = $hasta . ' 23:59:59';
+    }
+
+    $where = $condiciones === [] ? '' : ' WHERE ' . implode(' AND ', $condiciones);
+    $tablas = ' FROM logs_auditoria l LEFT JOIN usuarios u ON u.id = l.usuario_id';
+
+    $stmt = db()->prepare('SELECT COUNT(*) AS total' . $tablas . $where);
+    $stmt->execute($parametros);
+    $total = (int) ($stmt->fetch()['total'] ?? 0);
+
+    $totalPaginas = max(1, (int) ceil($total / $porPagina));
+    $pagina = min(max(1, $pagina), $totalPaginas);
+    $desplazamiento = ($pagina - 1) * $porPagina;
+
+    $stmt = db()->prepare(
+        'SELECT l.id, l.fecha, l.accion, l.detalle, l.ip, u.username' . $tablas . $where
+        . ' ORDER BY l.id DESC LIMIT :limite OFFSET :desplazamiento'
+    );
+    foreach ($parametros as $clave => $valor) {
+        $stmt->bindValue($clave, $valor);
+    }
+    $stmt->bindValue(':limite', $porPagina, PDO::PARAM_INT);
+    $stmt->bindValue(':desplazamiento', $desplazamiento, PDO::PARAM_INT);
+    $stmt->execute();
+
+    return [
+        'total'        => $total,
+        'filas'        => $stmt->fetchAll(),
+        'pagina'       => $pagina,
+        'porPagina'    => $porPagina,
+        'totalPaginas' => $totalPaginas,
+    ];
+}
+
+/**
+ * Acciones registradas en la auditoria, para poblar el filtro.
+ *
+ * @return list<string>
+ */
+function acciones_auditoria(int $limite = 200): array
+{
+    $stmt = db()->prepare('SELECT DISTINCT accion FROM logs_auditoria ORDER BY accion LIMIT :limite');
+    $stmt->bindValue(':limite', max(1, $limite), PDO::PARAM_INT);
+    $stmt->execute();
+
+    return array_map(static fn (array $f): string => (string) $f['accion'], $stmt->fetchAll());
+}
+
+/**
+ * Usuarios que aparecen en la auditoria, para poblar el filtro.
+ *
+ * @return list<string>
+ */
+function usuarios_auditoria(int $limite = 200): array
+{
+    $stmt = db()->prepare(
+        'SELECT DISTINCT u.username
+           FROM logs_auditoria l
+           JOIN usuarios u ON u.id = l.usuario_id
+          WHERE u.username IS NOT NULL
+          ORDER BY u.username
+          LIMIT :limite'
+    );
+    $stmt->bindValue(':limite', max(1, $limite), PDO::PARAM_INT);
+    $stmt->execute();
+
+    return array_map(static fn (array $f): string => (string) $f['username'], $stmt->fetchAll());
+}
+
+/**
  * Cuenta intentos fallidos recientes para aplicar el bloqueo temporal.
  *
  * Politica (POLITICA_SEGURIDAD.md): 5 intentos fallidos en 15 minutos
