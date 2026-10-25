@@ -16,3 +16,10 @@ vendor
 .env
 .env.*
 !.env.example
+
+# Archivos locales con secretos (mismos patrones que .gitignore).
+config/local.php
+*.pem
+*.key
+*.p12
+*.pfx
