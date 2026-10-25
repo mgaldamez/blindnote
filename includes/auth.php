@@ -18,6 +18,48 @@ function exigir_autenticacion(): void
         redirigir('login.php?aviso=debes_iniciar_sesion');
     }
     verificar_expiracion_sesion();
+    exigir_clave_al_dia();
+}
+
+/**
+ * Si la contrasena es temporal, obliga a cambiarla antes de seguir.
+ * Las unicas pantallas permitidas mientras tanto son cambiar_clave.php y
+ * logout.php (si no, habria un bucle de redirecciones).
+ */
+function exigir_clave_al_dia(): void
+{
+    if (!necesita_cambiar_clave()) {
+        return;
+    }
+
+    $script = basename((string) ($_SERVER['SCRIPT_NAME'] ?? ''));
+    if (in_array($script, ['cambiar_clave.php', 'logout.php'], true)) {
+        return;
+    }
+
+    redirigir('cambiar_clave.php?aviso=obligatorio');
+}
+
+/**
+ * La sesion quedo marcada con una contrasena temporal.
+ */
+function necesita_cambiar_clave(): bool
+{
+    return !empty($_SESSION['debe_cambiar_clave']);
+}
+
+/**
+ * Guarda la contrasena definitiva y retira la marca de temporal.
+ * El llamador valida la politica y la identidad del usuario.
+ */
+function cambiar_clave(int $usuarioId, string $claveNueva): void
+{
+    $hash = password_hash($claveNueva, PASSWORD_BCRYPT, ['cost' => BCRYPT_COST]);
+    db()->prepare('UPDATE usuarios SET password_hash = :h, debe_cambiar_clave = 0 WHERE id = :id')
+        ->execute([':h' => $hash, ':id' => $usuarioId]);
+
+    $_SESSION['debe_cambiar_clave'] = false;
+    registrar_auditoria($usuarioId, 'CLAVE_CAMBIADA', 'el usuario cambio su contrasena');
 }
 
 /**
@@ -51,7 +93,7 @@ function autenticar(string $username, string $password): array
     //    la cuenta antes de contar: el control de fuerza bruta cuenta por
     //    cuenta, no por el texto tipeado, y usuario y correo son la misma.
     $stmt = db()->prepare(
-        'SELECT id, nombre, username, email, password_hash, rol, activo
+        'SELECT id, nombre, username, email, password_hash, rol, activo, debe_cambiar_clave
            FROM usuarios
           WHERE username = :username
              OR email = :email
@@ -122,6 +164,7 @@ function autenticar(string $username, string $password): array
     $_SESSION['username']         = $usuario['username'];
     $_SESSION['email']            = $usuario['email'];
     $_SESSION['rol']              = $usuario['rol'];
+    $_SESSION['debe_cambiar_clave'] = ((int) $usuario['debe_cambiar_clave'] === 1);
     $_SESSION['inicio_sesion']    = $ahora;
     $_SESSION['ultima_actividad'] = $ahora;
     $_SESSION['user_agent']       = $_SERVER['HTTP_USER_AGENT'] ?? '';
@@ -135,6 +178,61 @@ function autenticar(string $username, string $password): array
     registrar_auditoria((int) $usuario['id'], 'LOGIN_OK', 'Inicio de sesion correcto');
 
     return ['ok' => true, 'mensaje' => 'Bienvenido.'];
+}
+
+/**
+ * Cantidad de administradores activos: protege contra quedarse sin acceso.
+ */
+function contar_admins_activos(): int
+{
+    return (int) db()->query("SELECT COUNT(*) AS c FROM usuarios WHERE rol = 'admin' AND activo = 1")
+        ->fetch()['c'];
+}
+
+function es_admin_activo(int $usuarioId): bool
+{
+    $stmt = db()->prepare("SELECT 1 FROM usuarios WHERE id = :id AND rol = 'admin' AND activo = 1");
+    $stmt->execute([':id' => $usuarioId]);
+
+    return $stmt->fetch() !== false;
+}
+
+/**
+ * Decide si el actor puede desactivar (soft delete) al usuario objetivo.
+ * Nadie se desactiva a si mismo y el sistema no puede quedar sin admins.
+ */
+function puede_desactivar(int $actorId, int $objetivoId): bool
+{
+    if ($actorId === $objetivoId) {
+        return false;
+    }
+
+    if (es_admin_activo($objetivoId) && contar_admins_activos() <= 1) {
+        return false;
+    }
+
+    return true;
+}
+
+/**
+ * Decide si el actor puede dejar al objetivo con el rol indicado.
+ * Nadie se quita su propio rol admin y el ultimo admin activo no se degrada.
+ */
+function puede_cambiar_rol(int $actorId, int $objetivoId, string $rolNuevo): bool
+{
+    if ($rolNuevo === 'admin') {
+        return true;
+    }
+
+    if ($actorId === $objetivoId) {
+        return false;
+    }
+
+    if (es_admin_activo($objetivoId) && contar_admins_activos() <= 1) {
+        return false;
+    }
+
+    return true;
 }
 
 /**

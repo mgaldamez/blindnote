@@ -25,6 +25,8 @@ CREATE TABLE IF NOT EXISTS usuarios (
     email             VARCHAR(150)  NOT NULL,
     username          VARCHAR(50)   NOT NULL,
     password_hash     VARCHAR(255)  NOT NULL,
+    -- 1 = la contrasena es temporal y debe cambiarse en el proximo login.
+    debe_cambiar_clave TINYINT(1)   NOT NULL DEFAULT 0,
     rol               ENUM('admin','usuario') NOT NULL DEFAULT 'usuario',
     activo            TINYINT(1)    NOT NULL DEFAULT 1,
     ultimo_login      DATETIME      NULL,

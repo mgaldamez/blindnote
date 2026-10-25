@@ -32,6 +32,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!$errores) {
         $r = autenticar($username, $password);
         if ($r['ok']) {
+            // Si la contrasena es temporal, el primer destino es el cambio.
+            if (necesita_cambiar_clave()) {
+                redirigir('cambiar_clave.php?aviso=obligatorio');
+            }
             redirigir('dashboard.php');
         }
         $errores[] = $r['mensaje'];
