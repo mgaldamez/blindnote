@@ -54,7 +54,7 @@ h2 { font-size: 1.05rem; margin-top: 0; letter-spacing: -.01em; }
 }
 .marca {
     display: flex; align-items: center; gap: .5rem;
-    margin-right: auto;   /* toggle + marca a la izquierda, usuario a la derecha */
+    margin-right: 0;      /* el toggle va pegado a su derecha */
     color: var(--texto-fuerte); font-weight: 700; font-size: 1rem; letter-spacing: -.01em;
 }
 .marca:hover { text-decoration: none; }
@@ -317,17 +317,20 @@ code {
 }
 
 .sidebar {
-    /* La topbar es sticky: el sidebar arranca debajo y su alto descuenta ese
-       espacio (--alto-topbar lo mide app.js). Sin esto el pie cae fuera. */
+    /* La columna se estira de la barra superior al pie. El contenido interno es
+       el que queda fijo en pantalla mientras la pagina scrollea. */
+    align-self: stretch;   /* llena la fila: toca la barra superior y el pie */
+    background: var(--panel);
+    border-right: 1px solid var(--borde);
+}
+
+.sidebar__interior {
     position: sticky;
     top: var(--alto-topbar, 3.5rem);
-    align-self: start;
-    max-height: calc(100dvh - var(--alto-topbar, 3.5rem));
+    height: calc(100dvh - var(--alto-topbar, 3.5rem));
     display: flex; flex-direction: column; justify-content: space-between;
     gap: 1rem;
     padding: 1rem .7rem;
-    background: var(--panel);
-    border-right: 1px solid var(--borde);
     overflow: hidden;          /* el pie queda fijo; scrollea la lista */
 }
 
@@ -363,6 +366,8 @@ code {
 .sidebar__usuario em { font-style: normal; font-weight: 400; opacity: .75; }
 
 .topbar__usuario {
+    margin-left: auto;    /* empuja el bloque a la derecha */
+    padding-right: .9rem; /* sin quedar pegado al borde */
     font-size: .85rem; font-weight: 600; color: var(--texto-suave);
     max-width: 42vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
@@ -385,7 +390,7 @@ code {
     body.nav-colapsado .nav-seccion__titulo,
     body.nav-colapsado .sidebar__usuario { display: none; }
     body.nav-colapsado .nav-enlace { justify-content: center; padding: .55rem .3rem; }
-    body.nav-colapsado .sidebar { padding-inline: .45rem; }
+    body.nav-colapsado .sidebar__interior { padding-inline: .45rem; }
     body.nav-colapsado .sidebar__pie { align-items: stretch; }
     body.nav-colapsado .sidebar__pie .btn { width: 100%; padding-inline: .3rem; }
     .velo { display: none !important; }
@@ -397,7 +402,7 @@ code {
 
     .sidebar {
         position: fixed; inset: 0 auto 0 0;
-        top: 0; max-height: none; height: auto;
+        min-height: 0;
         width: min(16rem, 84vw);
         z-index: 40;
         transform: translateX(-102%);
@@ -405,6 +410,7 @@ code {
         box-shadow: 0 8px 24px rgba(16, 24, 40, .18);
     }
     body.nav-abierto .sidebar { transform: none; }
+    .sidebar__interior { position: static; height: 100%; }
 
     .velo {
         display: none;

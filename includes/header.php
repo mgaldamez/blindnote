@@ -57,6 +57,10 @@ $cssVersion = @filemtime(__DIR__ . '/../assets/css/estilos.css') ?: 1;
 
 <header class="topbar">
     <div class="topbar__inner">
+        <a class="marca" href="index.php">
+            <span class="marca__logo">B</span>
+            <span><?= e(APP_NOMBRE) ?></span>
+        </a>
         <?php if ($autenticado): ?>
             <button class="nav-toggle" type="button" data-nav-toggle
                     aria-controls="navegacion" aria-expanded="true" title="Mostrar u ocultar el menu">
@@ -68,10 +72,6 @@ $cssVersion = @filemtime(__DIR__ . '/../assets/css/estilos.css') ?: 1;
             </button>
         <?php endif; ?>
 
-        <a class="marca" href="index.php">
-            <span class="marca__logo">B</span>
-            <span><?= e(APP_NOMBRE) ?></span>
-        </a>
 
         <?php if ($autenticado): ?>
             <span class="topbar__usuario" title="<?= e($_SESSION['nombre'] ?? '') ?>">
@@ -84,6 +84,7 @@ $cssVersion = @filemtime(__DIR__ . '/../assets/css/estilos.css') ?: 1;
 <div class="layout<?= $autenticado ? '' : ' layout--simple' ?>">
 <?php if ($autenticado): ?>
     <aside class="sidebar" id="navegacion" aria-label="Navegacion principal">
+        <div class="sidebar__interior">
         <nav class="nav-secciones">
             <div class="nav-seccion">
                 <p class="nav-seccion__titulo">Principal</p>
@@ -118,6 +119,7 @@ $cssVersion = @filemtime(__DIR__ . '/../assets/css/estilos.css') ?: 1;
                 <?= csrf_campo() ?>
                 <button type="submit" class="btn btn--peligro btn--sm">Salir</button>
             </form>
+        </div>
         </div>
     </aside>
 

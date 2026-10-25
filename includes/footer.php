@@ -7,7 +7,7 @@ $jsVersion = @filemtime(__DIR__ . '/../assets/js/app.js') ?: 1;
 
 <footer class="footer">
     <div class="contenedor">
-        <p><?= e(APP_NOMBRE) ?></p>
+        <p><?= e(APP_NOMBRE) ?> &middot; UNAB 2026</p>
     </div>
 </footer>
 
