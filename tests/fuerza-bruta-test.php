@@ -288,6 +288,40 @@ $casosIp = [
     ],
 ];
 
+// Bordes de la lista de confianza y cabeceras adversas.
+$casosIp += [
+    'cliente IPv6 directo: la cabecera se ignora' => [
+        ['REMOTE_ADDR' => '2001:db8::1', 'HTTP_X_REAL_IP' => '203.0.113.5'], '2001:db8::1',
+    ],
+    'loopback IPv6 (::1) es proxy confiable' => [
+        ['REMOTE_ADDR' => '::1', 'HTTP_X_REAL_IP' => '203.0.113.6'], '203.0.113.6',
+    ],
+    'X-Forwarded-For con espacios y comas vacias' => [
+        ['REMOTE_ADDR' => '172.18.0.1', 'HTTP_X_FORWARDED_FOR' => '  1.1.1.1 , , 203.0.113.10  '], '203.0.113.10',
+    ],
+    'X-Forwarded-For con ultimo invalido: cae al proxy' => [
+        ['REMOTE_ADDR' => '172.18.0.1', 'HTTP_X_FORWARDED_FOR' => '203.0.113.10, invalido'], '172.18.0.1',
+    ],
+    'X-Real-IP con coma no se parte: se ignora' => [
+        ['REMOTE_ADDR' => '172.18.0.1', 'HTTP_X_REAL_IP' => '203.0.113.7, 1.1.1.1'], '172.18.0.1',
+    ],
+    'REMOTE_ADDR que no es IP: 0.0.0.0' => [
+        ['REMOTE_ADDR' => 'not-an-ip'], '0.0.0.0',
+    ],
+    '172.15 no es rango privado: no confia' => [
+        ['REMOTE_ADDR' => '172.15.0.1', 'HTTP_X_REAL_IP' => '203.0.113.9'], '172.15.0.1',
+    ],
+    '172.32 no es rango privado: no confia' => [
+        ['REMOTE_ADDR' => '172.32.0.1', 'HTTP_X_REAL_IP' => '203.0.113.9'], '172.32.0.1',
+    ],
+    '10.0.0.0/8 confia X-Real-IP' => [
+        ['REMOTE_ADDR' => '10.0.0.5', 'HTTP_X_REAL_IP' => '203.0.113.11'], '203.0.113.11',
+    ],
+    '192.168.0.0/16 confia en X-Forwarded-For' => [
+        ['REMOTE_ADDR' => '192.168.1.1', 'HTTP_X_FORWARDED_FOR' => '203.0.113.12'], '203.0.113.12',
+    ],
+];
+
 foreach ($casosIp as $caso => [$servidor, $esperada]) {
     $_SERVER = $servidor;
     $obtenida = ip_cliente();
