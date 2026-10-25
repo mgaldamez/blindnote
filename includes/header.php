@@ -11,7 +11,8 @@ $paginaActual = basename($_SERVER['PHP_SELF'] ?? '');
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= e($titulo ?? APP_NOMBRE) ?> | <?= e(APP_NOMBRE) ?></title>
-    <link rel="stylesheet" href="assets/css/estilos.css">
+    <?php $cssVersion = @filemtime(__DIR__ . '/../assets/css/estilos.css') ?: 1; ?>
+    <link rel="stylesheet" href="assets/css/estilos.css?v=<?= (int) $cssVersion ?>">
 </head>
 <body>
 <header class="topbar">

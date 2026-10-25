@@ -139,6 +139,35 @@ h2 { font-size: 1.05rem; margin-top: 0; letter-spacing: -.01em; }
     box-shadow: 0 0 0 3px rgba(29, 78, 216, .12);
 }
 .campo textarea { resize: vertical; }
+
+/* Los <select> no heredan el estilo de los inputs: el navegador los dibuja
+   con su propio borde, tipografia y flecha. Se alinean al mismo sistema y se
+   reemplaza la flecha nativa por un chevron en SVG (data URI, permitido por
+   img-src 'self' data: en la CSP). */
+.campo select, .filtros select {
+    width: 100%; padding: .58rem 2.2rem .58rem .75rem;
+    border-radius: var(--radio-sm); border: 1px solid var(--borde-fuerte);
+    background-color: #fff; color: var(--texto);
+    font-family: inherit; font-size: .92rem; line-height: 1.4;
+    cursor: pointer;
+    appearance: none; -webkit-appearance: none; -moz-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='none' stroke='%235f6b76' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' d='M1 1.5 6 6.5 11 1.5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right .75rem center;
+    transition: border-color .12s ease, box-shadow .12s ease;
+}
+
+.campo select:focus, .filtros select:focus {
+    outline: none; border-color: var(--acento);
+    box-shadow: 0 0 0 3px rgba(29, 78, 216, .12);
+}
+
+.campo select:hover, .filtros select:hover { border-color: var(--texto-suave); }
+
+/* En pantallas chicas los filtros ocupan toda la fila. */
+@media (max-width: 640px) {
+    .filtros .campo, .filtros .campo--acciones { width: 100%; min-width: 0; }
+}
 .ayuda { display: block; color: var(--texto-suave); font-size: .8rem; margin-top: .3rem; }
 
 /* ------------------------- Autenticacion ------------------------- */
