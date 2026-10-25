@@ -270,6 +270,32 @@ $stmt = db()->prepare('SELECT rol FROM usuarios WHERE id = :id');
 $stmt->execute([':id' => $idCreado]);
 comprobar('ascender a admin se permite', 1, (($stmt->fetch()['rol'] ?? '') === 'admin') ? 1 : 0);
 
+/* ---------------- S5/S6: desactivar (soft delete) y reactivar ---------------- */
+
+$res = desactivar_usuario($idCreado, $idNormal);
+comprobar('un no-admin no puede desactivar', 1, $res['ok'] ? 0 : 1);
+
+$res = desactivar_usuario($idAdminUno, $idAdminUno);
+comprobar('un admin no puede desactivarse a si mismo (funcion)', 1, $res['ok'] ? 0 : 1);
+
+$res = desactivar_usuario($idCreado, $idAdminUno);
+comprobar('el admin desactiva a otro usuario', 1, $res['ok'] ? 1 : 0);
+
+$stmt = db()->prepare('SELECT activo FROM usuarios WHERE id = :id');
+$stmt->execute([':id' => $idCreado]);
+comprobar('la fila sigue existiendo, marcada inactiva', 1, ((int) ($stmt->fetch()['activo'] ?? 1) === 0) ? 1 : 0);
+
+db()->prepare('DELETE FROM intentos_login WHERE username LIKE :p')->execute([':p' => PREFIJO_U . '%']);
+$r = autenticar($nuevo, CLAVE_TEMP);
+comprobar('un usuario desactivado no puede entrar', 1, $r['ok'] ? 0 : 1);
+comprobar('y el mensaje lo explica', 1, str_contains($r['mensaje'], 'deshabilitada') ? 1 : 0);
+
+$res = activar_usuario($idCreado, $idAdminUno);
+comprobar('el admin reactiva la cuenta', 1, $res['ok'] ? 1 : 0);
+
+$r = autenticar($nuevo, CLAVE_TEMP);
+comprobar('al reactivarla vuelve a poder entrar', 1, $r['ok'] ? 1 : 0);
+
 /* ---------------- Limpieza ---------------- */
 
 if ($otrosAdmins !== []) {

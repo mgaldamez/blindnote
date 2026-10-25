@@ -347,6 +347,60 @@ function actualizar_usuario_admin(array $datos, int $objetivoId, int $actorId): 
 }
 
 /**
+ * Desactiva una cuenta (soft delete: activo = 0). Nunca borra la fila, para
+ * conservar el historial de auditoria y las notas asociadas.
+ *
+ * @return array{ok:bool, errores:list<string>}
+ */
+function desactivar_usuario(int $objetivoId, int $actorId): array
+{
+    if (!es_admin_activo($actorId)) {
+        return ['ok' => false, 'errores' => ['Solo un administrador activo puede desactivar cuentas.']];
+    }
+
+    $stmt = db()->prepare('SELECT id FROM usuarios WHERE id = :id');
+    $stmt->execute([':id' => $objetivoId]);
+    if ($stmt->fetch() === false) {
+        return ['ok' => false, 'errores' => ['El usuario no existe.']];
+    }
+
+    if (!puede_desactivar($actorId, $objetivoId)) {
+        return ['ok' => false, 'errores' => [
+            'No se puede desactivar esa cuenta: nadie puede desactivarse a si mismo '
+            . 'y el sistema no puede quedar sin administradores activos.',
+        ]];
+    }
+
+    db()->prepare('UPDATE usuarios SET activo = 0 WHERE id = :id')->execute([':id' => $objetivoId]);
+    registrar_auditoria($actorId, 'USUARIO_DESACTIVADO', 'id=' . $objetivoId);
+
+    return ['ok' => true, 'errores' => []];
+}
+
+/**
+ * Reactiva una cuenta desactivada.
+ *
+ * @return array{ok:bool, errores:list<string>}
+ */
+function activar_usuario(int $objetivoId, int $actorId): array
+{
+    if (!es_admin_activo($actorId)) {
+        return ['ok' => false, 'errores' => ['Solo un administrador activo puede reactivar cuentas.']];
+    }
+
+    $stmt = db()->prepare('SELECT id FROM usuarios WHERE id = :id');
+    $stmt->execute([':id' => $objetivoId]);
+    if ($stmt->fetch() === false) {
+        return ['ok' => false, 'errores' => ['El usuario no existe.']];
+    }
+
+    db()->prepare('UPDATE usuarios SET activo = 1 WHERE id = :id')->execute([':id' => $objetivoId]);
+    registrar_auditoria($actorId, 'USUARIO_ACTIVADO', 'id=' . $objetivoId);
+
+    return ['ok' => true, 'errores' => []];
+}
+
+/**
  * Decide si el actor puede desactivar (soft delete) al usuario objetivo.
  * Nadie se desactiva a si mismo y el sistema no puede quedar sin admins.
  */

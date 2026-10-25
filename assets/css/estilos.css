@@ -275,3 +275,8 @@ code {
 .tabla__acciones {
     white-space: nowrap;
 }
+
+.en-linea {
+    display: inline-block;
+    margin-left: 0.35rem;
+}

@@ -10,6 +10,32 @@
 require_once __DIR__ . '/includes/init.php';
 exigir_rol('admin');
 
+$actorId = (int) $_SESSION['usuario_id'];
+$erroresAccion = [];
+
+// ------------------------- Acciones (POST con CSRF) -------------------------
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    csrf_verificar($_POST['csrf_token'] ?? null);
+
+    $accion = post('accion');
+    $objetivo = (int) post('id');
+
+    if ($accion === 'desactivar') {
+        $resultado = desactivar_usuario($objetivo, $actorId);
+    } elseif ($accion === 'activar') {
+        $resultado = activar_usuario($objetivo, $actorId);
+    } else {
+        $resultado = ['ok' => false, 'errores' => ['Accion no reconocida.']];
+    }
+
+    if ($resultado['ok']) {
+        redirigir('admin.php?ok=' . ($accion === 'desactivar' ? 'desactivado' : 'activado'));
+    }
+
+    $erroresAccion = $resultado['errores'];
+    registrar_auditoria($actorId, 'USUARIO_ACCION_RECHAZADA', $accion . ' id=' . $objetivo);
+}
+
 // ------------------------- Filtros y paginacion -------------------------
 $busqueda = trim((string) ($_GET['q'] ?? ''));
 
@@ -83,6 +109,16 @@ $mensajesAviso = [
     <div class="alerta alerta--info"><?= e($mensajesAviso[$aviso]) ?></div>
 <?php endif; ?>
 
+<?php if ($erroresAccion): ?>
+    <div class="alerta alerta--error">
+        <ul>
+            <?php foreach ($erroresAccion as $err): ?>
+                <li><?= e($err) ?></li>
+            <?php endforeach; ?>
+        </ul>
+    </div>
+<?php endif; ?>
+
 <div class="tarjeta">
     <div class="tarjeta__cabecera">
         <h2>Usuarios (<?= (int) $total ?>)</h2>
@@ -140,6 +176,19 @@ $mensajesAviso = [
                         <td><?= e((string) ($u['ultimo_login'] ?? '—')) ?></td>
                         <td class="tabla__acciones">
                             <a class="btn" href="usuarios_form.php?id=<?= (int) $u['id'] ?>">Editar</a>
+                            <?php if ((int) $u['id'] !== $actorId): ?>
+                                <form method="post" action="admin.php" class="en-linea">
+                                    <?= csrf_campo() ?>
+                                    <input type="hidden" name="id" value="<?= (int) $u['id'] ?>">
+                                    <?php if ((int) $u['activo'] === 1): ?>
+                                        <input type="hidden" name="accion" value="desactivar">
+                                        <button type="submit" class="btn btn--peligro">Desactivar</button>
+                                    <?php else: ?>
+                                        <input type="hidden" name="accion" value="activar">
+                                        <button type="submit" class="btn">Reactivar</button>
+                                    <?php endif; ?>
+                                </form>
+                            <?php endif; ?>
                         </td>
                     </tr>
                 <?php endforeach; ?>
