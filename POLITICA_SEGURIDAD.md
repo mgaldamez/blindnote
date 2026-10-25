@@ -75,15 +75,26 @@ Toda persona con acceso debe conocer esta política antes de usar el sistema.
 
 ### 6.1 Alta de usuarios
 
-- Las cuentas se crean desde `register.php` o por el administrador.
-- El **primer usuario registrado** obtiene el rol `admin`; los siguientes
-  obtienen el rol `usuario`.
+- Las cuentas se crean desde `register.php` o por el administrador desde
+  `usuarios_form.php` (pantalla de Administración).
+- Toda cuenta creada por un administrador recibe una **contraseña temporal**
+  (`usuarios.debe_cambiar_clave`) y el usuario debe cambiarla en su primer
+  inicio de sesión, antes de acceder a cualquier otra sección.
+- El **primer usuario registrado** en una base vacía obtiene el rol `admin`;
+  los siguientes obtienen el rol `usuario`. Es el mecanismo de arranque: en un
+  despliegue nuevo hay que registrar la cuenta de administrador **antes** de
+  publicar el sitio, porque el primero que se registre se queda con ese rol.
 - En producción, el registro público debe restringirse o deshabilitarse una vez
   creadas las cuentas necesarias.
 - No se permiten cuentas genéricas, compartidas ni de prueba con contraseñas
   conocidas.
 
 ### 6.2 Modificación y bajas
+
+- Las bajas son **lógicas** (`usuarios.activo = 0`): la fila, sus notas y su
+  historial de auditoría se conservan, y la cuenta puede reactivarse.
+- Un administrador no puede desactivar su propia cuenta ni quitarse su rol, y
+  el sistema no puede quedar sin administradores activos.
 
 - Solo un administrador puede cambiar roles o deshabilitar cuentas.
 - El cambio de rol debe registrarse en `logs_auditoria`.

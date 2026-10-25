@@ -179,7 +179,9 @@ seguridad-web/
 ├─ logout.php              Fase 3: cierre de sesión seguro (POST + CSRF)
 ├─ dashboard.php           Panel con medidas de seguridad activas
 ├─ notas.php               CRUD que demuestra mitigación de SQLi/XSS/CSRF/IDOR
-├─ admin.php               Control de acceso por roles (solo admin)
+├─ admin.php               Administración: usuarios paginados y auditoría
+├─ usuarios_form.php       Alta y edición de usuarios (solo admin)
+├─ cambiar_clave.php       Cambio de contraseña (obligatorio si es temporal)
 ├─ informe_fase4.php       Fase 4: informe de vulnerabilidades y soluciones
 ├─ INFORME_PROYECTO.md     Informe del proyecto y verificación del checklist
 ├─ COMO_FUNCIONA.md        Guía técnica: flujos, controles y pruebas
@@ -198,7 +200,8 @@ seguridad-web/
 ├─ docker-compose.yml      Stack desde la imagen publicada (GHCR)
 ├─ docker-compose.dev.yml  Override que construye desde el Dockerfile
 ├─ tests/
-│  └─ fuerza-bruta-test.php  Regresión del bloqueo por usuario e IP
+│  ├─ fuerza-bruta-test.php  Regresión del bloqueo por cuenta e IP
+│  └─ usuarios-crud-test.php Regresión del CRUD y de las guardas de admin
 ├─ .github/workflows/ci.yml  Integración continua: build, checks y publicación
 ├─ deploy/nginx.conf.example  Proxy inverso de referencia (solo 443)
 └─ .htaccess               Cabeceras de seguridad y protección de carpetas
@@ -228,6 +231,8 @@ seguridad-web/
 | Cierre de sesión seguro     | `logout.php` por **POST + token CSRF** + destrucción de cookie    |
 | Control de acceso           | Sesiones + **RBAC** (`exigir_rol`) y verificación de propiedad    |
 | Extras                      | Bloqueo por fuerza bruta, regeneración de ID, expiración          |
+| Administración de usuarios  | Listado paginado con filtros, alta con **clave temporal**, edición, baja lógica (soft delete) y reactivación |
+| Guardas de auto-bloqueo     | Un admin no puede desactivarse ni quitarse el rol; nunca se queda el sistema sin admins activos |
 
 ## 6. Fase 4 — Análisis de vulnerabilidades
 

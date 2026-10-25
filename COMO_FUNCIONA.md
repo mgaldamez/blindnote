@@ -161,6 +161,32 @@ Ubicada en `includes/auth.php`:
 - Los intentos se guardan en `intentos_login` y los bloqueos en
   `logs_auditoria`.
 
+### 5.4 Administración de usuarios
+
+Solo para el rol `admin` (`admin.php` exige el rol; las funciones de escritura
+lo vuelven a comprobar). Pantallas: `admin.php` (listado y acciones) y
+`usuarios_form.php` (alta y edición).
+
+- **Listado**: 10 filas por página con buscador (nombre, usuario, correo) y
+  filtros por rol y por estado. La consulta vive en `listar_usuarios()`
+  (`includes/functions.php`) y usa sentencias preparadas; los enlaces de
+  paginación conservan los filtros.
+- **Alta**: el administrador define una contraseña temporal; la fila se crea con
+  `debe_cambiar_clave = 1` y el usuario es redirigido a `cambiar_clave.php` en
+  su primer login (`exigir_clave_al_dia()` dentro de `exigir_autenticacion()`).
+- **Edición**: nombre, correo, usuario y rol. Si un administrador se edita a sí
+  mismo, se refrescan los datos de la sesión.
+- **Baja**: soft delete (`activo = 0`) y reactivación. La cuenta desactivada no
+  puede iniciar sesión y, al reactivarse, vuelve a poder.
+- **Guardas** (`puede_desactivar()`, `puede_cambiar_rol()`,
+  `contar_admins_activos()`): nadie se desactiva a sí mismo, nadie se quita su
+  rol `admin` y no se puede dejar el sistema sin administradores activos. Se
+  aplican en la función, no solo en la interfaz.
+- **Auditoría**: `USUARIO_CREADO`, `USUARIO_EDITADO`, `USUARIO_DESACTIVADO`,
+  `USUARIO_ACTIVADO`, `CLAVE_CAMBIADA` y los rechazos
+  (`USUARIO_ALTA_RECHAZADA`, `USUARIO_EDICION_RECHAZADA`,
+  `USUARIO_ACCION_RECHAZADA`).
+
 ## 6. Registro y política de contraseñas
 
 `register.php` valida:
