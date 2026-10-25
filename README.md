@@ -123,8 +123,8 @@ Esos valores son los que el código tiene quemados hoy: dejarlos igual reproduce
 el comportamiento actual.
 
 > `.env` está en `.gitignore` y en `.dockerignore`: nunca se versiona ni entra
-> en la imagen. Sí conviene versionar un `.env.example` sin secretos: `.env.*`
-> está ignorado salvo esa excepción.
+> en la imagen. El repo sí incluye `.env.example` (sin secretos) como plantilla:
+> `.env.*` está ignorado salvo esa excepción.
 >
 > El servidor embebido de PHP (`php -S`) **no** lee `.env`: en ese modo hay que
 > exportar las variables en el entorno o editar `config/config.php`.

@@ -12,10 +12,10 @@ vendor
 *.pdf
 *.log
 
-# Credenciales: nunca dentro de la imagen. .env.example no lleva secretos.
+# Credenciales y plantillas: nunca dentro de la imagen (.env* cubre .env y
+# .env.example; git sí versiona el ejemplo, Docker no lo necesita).
 .env
 .env.*
-!.env.example
 
 # Archivos locales con secretos (mismos patrones que .gitignore).
 config/local.php
