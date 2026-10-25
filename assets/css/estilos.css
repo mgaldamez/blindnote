@@ -302,3 +302,120 @@ code {
     display: inline-block;
     margin-left: 0.35rem;
 }
+
+/* =====================================================================
+   Navegacion lateral por secciones
+   ---------------------------------------------------------------------
+   .layout = sidebar + contenido. En escritorio el sidebar se colapsa a
+   iconos (clase nav-colapsado en <body>); en pantallas chicas es un panel
+   deslizable (clase nav-abierto) con velo.
+   ===================================================================== */
+.layout {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 15.5rem minmax(0, 1fr);
+    align-items: start;
+}
+
+.layout--simple { grid-template-columns: minmax(0, 1fr); }
+
+.salto {
+    position: absolute;
+    left: -9999px;
+}
+.salto:focus {
+    left: 1rem; top: 1rem; z-index: 60;
+    padding: .5rem .8rem; border-radius: var(--radio-sm);
+    background: var(--panel); border: 1px solid var(--borde-fuerte);
+}
+
+.sidebar {
+    position: sticky; top: 0;
+    align-self: start;
+    height: 100vh; height: 100dvh;
+    display: flex; flex-direction: column; justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem .7rem;
+    background: var(--panel);
+    border-right: 1px solid var(--borde);
+    overflow-y: auto;
+}
+
+.nav-secciones { display: flex; flex-direction: column; gap: 1.15rem; }
+.nav-seccion { display: flex; flex-direction: column; gap: .1rem; }
+
+.nav-seccion__titulo {
+    margin: 0 .55rem .3rem;
+    font-size: .71rem; font-weight: 700; letter-spacing: .09em;
+    text-transform: uppercase; color: var(--texto-suave);
+}
+
+.nav-enlace {
+    display: flex; align-items: center; gap: .6rem;
+    padding: .5rem .55rem;
+    border-radius: var(--radio-sm);
+    color: var(--texto-suave); font-weight: 600; font-size: .9rem;
+    transition: background .12s ease, color .12s ease;
+}
+.nav-enlace:hover { background: var(--panel-suave); color: var(--texto-fuerte); text-decoration: none; }
+.nav-enlace.activo { background: var(--panel-suave); color: var(--texto-fuerte); }
+.nav-enlace__icono { flex: 0 0 auto; }
+.nav-enlace__texto { white-space: nowrap; }
+
+.sidebar__pie {
+    display: flex; flex-direction: column; gap: .5rem;
+    padding-top: .8rem; border-top: 1px solid var(--borde);
+}
+.sidebar__usuario { font-size: .85rem; font-weight: 600; color: var(--texto-suave); }
+.sidebar__usuario em { font-style: normal; font-weight: 400; opacity: .75; }
+
+.topbar__usuario { font-size: .85rem; font-weight: 600; color: var(--texto-suave); }
+
+.nav-toggle {
+    display: inline-flex; align-items: center; gap: .4rem;
+    padding: .42rem .6rem;
+    border: 1px solid var(--borde-fuerte); border-radius: var(--radio-sm);
+    background: #fff; color: var(--texto-fuerte);
+    font: inherit; font-size: .85rem; font-weight: 600; cursor: pointer;
+    transition: background .12s ease;
+}
+.nav-toggle:hover { background: var(--panel-suave); }
+.nav-toggle:focus-visible { outline: 2px solid var(--acento); outline-offset: 2px; }
+
+/* --------- Escritorio: colapso manual a iconos --------- */
+@media (min-width: 901px) {
+    body.nav-colapsado .layout { grid-template-columns: 4.6rem minmax(0, 1fr); }
+    body.nav-colapsado .nav-enlace__texto,
+    body.nav-colapsado .nav-seccion__titulo,
+    body.nav-colapsado .sidebar__usuario { display: none; }
+    body.nav-colapsado .nav-enlace { justify-content: center; padding: .55rem .3rem; }
+    body.nav-colapsado .sidebar { padding-inline: .45rem; }
+    body.nav-colapsado .sidebar__pie { align-items: stretch; }
+    body.nav-colapsado .sidebar__pie .btn { width: 100%; padding-inline: .3rem; }
+    .velo { display: none !important; }
+}
+
+/* --------- Pantallas chicas: panel deslizable --------- */
+@media (max-width: 900px) {
+    .layout { grid-template-columns: minmax(0, 1fr); }
+
+    .sidebar {
+        position: fixed; inset: 0 auto 0 0;
+        width: min(16rem, 84vw);
+        z-index: 40;
+        transform: translateX(-102%);
+        transition: transform .18s ease;
+        box-shadow: 0 8px 24px rgba(16, 24, 40, .18);
+    }
+    body.nav-abierto .sidebar { transform: none; }
+
+    .velo {
+        display: none;
+        position: fixed; inset: 0; z-index: 35;
+        background: rgba(16, 24, 40, .35);
+    }
+    body.nav-abierto .velo { display: block; }
+
+    .nav-toggle__texto { display: none; }
+    .topbar__usuario { display: none; }
+}
