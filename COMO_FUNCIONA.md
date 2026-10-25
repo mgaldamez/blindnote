@@ -138,12 +138,15 @@ Ubicada en `includes/auth.php`:
 
 - Todos los fallos de credenciales muestran el mismo texto:
   “Usuario o contraseña incorrectos.”
-- Tras 5 intentos fallidos en 15 minutos **para ese usuario y esa IP** se
+- Tras 5 intentos fallidos en 15 minutos **para esa cuenta y esa IP** se
   bloquea el acceso de esa combinación.
 - `intentos_fallidos_recientes()` cuenta con una condición conjuntiva
-  (`username = :username AND ip = :ip`): los fallos de otros usuarios desde la
+  (`username IN (...) AND ip = :ip`): los fallos de otras cuentas desde la
   misma IP no bloquean a un usuario legítimo (caso NAT, proxy inverso o ZAP
   corriendo en el mismo host).
+- El conteo es **por cuenta**: recibe el usuario y el correo del titular y
+  suma los fallos tipeados con cualquiera de los dos, así que alternar
+  identificadores no duplica los intentos ni esquiva el bloqueo.
 - Los intentos se guardan en `intentos_login` y los bloqueos en
   `logs_auditoria`.
 

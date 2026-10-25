@@ -148,7 +148,7 @@ seguridad.
 ### 7.4 Protección contra fuerza bruta
 
 - Bloqueo temporal tras **5 intentos fallidos** durante **15 minutos** por
-  usuario e IP.
+  cuenta (usuario o correo) e IP.
 - Mensajes de error genéricos para no revelar si la cuenta existe.
 - Registro de cada intento en `intentos_login` y de cada bloqueo en
   `logs_auditoria`.

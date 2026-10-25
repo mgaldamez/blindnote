@@ -47,18 +47,9 @@ function autenticar(string $username, string $password): array
 {
     $username = trim($username);
 
-    // 1) Control de fuerza bruta ANTES de comprobar credenciales.
-    $fallidos = intentos_fallidos_recientes($username, ip_cliente());
-    if ($fallidos >= MAX_INTENTOS_FALLIDOS) {
-        registrar_auditoria(null, 'CUENTA_BLOQUEADA', "Demasiados intentos para: $username");
-        return [
-            'ok' => false,
-            'mensaje' => 'Demasiados intentos fallidos. Intentalo de nuevo en '
-                . MINUTOS_BLOQUEO . ' minutos.',
-        ];
-    }
-
-    // 2) Busqueda con consulta preparada (mitiga inyeccion SQL).
+    // 1) Busqueda con consulta preparada (mitiga inyeccion SQL). Se resuelve
+    //    la cuenta antes de contar: el control de fuerza bruta cuenta por
+    //    cuenta, no por el texto tipeado, y usuario y correo son la misma.
     $stmt = db()->prepare(
         'SELECT id, nombre, username, email, password_hash, rol, activo
            FROM usuarios
@@ -68,6 +59,21 @@ function autenticar(string $username, string $password): array
     );
     $stmt->execute([':username' => $username, ':email' => $username]);
     $usuario = $stmt->fetch();
+
+    // 2) Control de fuerza bruta ANTES de comprobar credenciales, agrupando
+    //    todos los identificadores de la cuenta (usuario y correo).
+    $identificadores = $usuario
+        ? [(string) $usuario['username'], (string) $usuario['email']]
+        : [$username];
+    $fallidos = intentos_fallidos_recientes($identificadores, ip_cliente());
+    if ($fallidos >= MAX_INTENTOS_FALLIDOS) {
+        registrar_auditoria(null, 'CUENTA_BLOQUEADA', "Demasiados intentos para: $username");
+        return [
+            'ok' => false,
+            'mensaje' => 'Demasiados intentos fallidos. Intentalo de nuevo en '
+                . MINUTOS_BLOQUEO . ' minutos.',
+        ];
+    }
 
     // 3) Mensaje de error GENERICO (no revela si el usuario existe).
     $mensajeGenerico = 'Usuario o contrasena incorrectos.';

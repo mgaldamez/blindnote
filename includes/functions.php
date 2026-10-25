@@ -254,25 +254,52 @@ function registrar_intento_login(string $username, bool $exitoso): void
  * Cuenta intentos fallidos recientes para aplicar el bloqueo temporal.
  *
  * Politica (POLITICA_SEGURIDAD.md): 5 intentos fallidos en 15 minutos
- * POR USUARIO **E** IP. La condicion es conjuntiva (AND): los fallos de
- * otros usuarios desde la misma IP no deben bloquear a un usuario legitimo
+ * POR CUENTA **E** IP. La condicion es conjuntiva (AND): los fallos de
+ * otras cuentas desde la misma IP no deben bloquear a un usuario legitimo
  * que comparte esa IP (NAT, proxy inverso, laboratorio con ZAP en el mismo
  * host). Con OR, cualquier IP acumulaba un unico balde global y cinco fallos
  * de nombres ajenos bloqueaban a todos los usuarios de esa IP.
+ *
+ * El conteo recibe TODOS los identificadores de la cuenta (usuario y correo)
+ * porque la tabla guarda el texto que se tipeo: sin agruparlos, alternar
+ * "ana" y "ana@ejemplo.com" duplicaria los intentos y el bloqueo no se
+ * trasladaria de un alias al otro.
+ *
+ * @param list<string> $identificadores
  */
-function intentos_fallidos_recientes(string $username, string $ip): int
+function intentos_fallidos_recientes(array $identificadores, string $ip): int
 {
+    $valores = [];
+    foreach ($identificadores as $identificador) {
+        $valor = trim((string) $identificador);
+        if ($valor !== '' && !in_array($valor, $valores, true)) {
+            $valores[] = $valor;
+        }
+    }
+
+    if ($valores === []) {
+        return 0;
+    }
+
+    $marcas = [];
+    foreach (array_keys($valores) as $indice) {
+        $marcas[] = ':identificador' . $indice;
+    }
+
     $stmt = db()->prepare(
         'SELECT COUNT(*) AS total
            FROM intentos_login
-          WHERE username = :username
+          WHERE username IN (' . implode(', ', $marcas) . ')
             AND ip = :ip
             AND exitoso = 0
             AND fecha > (NOW() - INTERVAL :minutos MINUTE)'
     );
-    $stmt->bindValue(':username', $username);
+    foreach ($valores as $indice => $valor) {
+        $stmt->bindValue(':identificador' . $indice, $valor);
+    }
     $stmt->bindValue(':ip', $ip);
     $stmt->bindValue(':minutos', MINUTOS_BLOQUEO, PDO::PARAM_INT);
     $stmt->execute();
+
     return (int) ($stmt->fetch()['total'] ?? 0);
 }

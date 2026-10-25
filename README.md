@@ -250,9 +250,10 @@ usuarios quedan bloqueados"):
 docker compose exec web php tests/fuerza-bruta-test.php
 ```
 
-Verifica que el bloqueo sea **por usuario e IP**: 5 fallos con nombres ajenos
+Verifica que el bloqueo sea **por cuenta e IP**: 5 fallos con nombres ajenos
 desde una misma IP no bloquean a un usuario legítimo, 5 fallos propios sí lo
-bloquean, y los fallos de otra IP o fuera de la ventana de 15 minutos no cuentan.
+bloquean, los fallos de otra IP o fuera de la ventana de 15 minutos no cuentan,
+y el usuario y el correo de la misma cuenta comparten un único contador.
 
 ## 7. Fase 5 — Política de seguridad
 
