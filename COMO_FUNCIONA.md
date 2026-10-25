@@ -117,22 +117,28 @@ Ejemplo: el usuario abre `dashboard.php`.
 
 Ubicada en `includes/auth.php`:
 
-1. Cuenta los intentos fallidos recientes por usuario e IP.
-2. Si supera el máximo, bloquea temporalmente y registra el evento.
-3. Busca al usuario con una consulta preparada:
+1. Busca al usuario con una consulta preparada:
    ```sql
    SELECT ... FROM usuarios
    WHERE username = :username OR email = :email
    LIMIT 1
    ```
-4. Si no existe, ejecuta un hash ficticio para igualar tiempos y evitar
+2. Resuelve los identificadores de esa cuenta (usuario y correo); si el
+   identificador no corresponde a ninguna cuenta, usa el texto tipeado.
+3. Cuenta los fallos recientes **por cuenta e IP** y, aparte, **por IP** (tope
+   secundario contra *password spraying*).
+4. Si supera cualquiera de los dos límites, bloquea temporalmente y registra
+   en auditoría qué límite se alcanzó (al usuario se le responde siempre lo
+   mismo).
+5. Si no existe, ejecuta un hash ficticio para igualar tiempos y evitar
    enumeración por temporización.
-5. Verifica la contraseña con `password_verify()`.
-6. Si el hash necesita actualización, aplica `password_hash()` de nuevo.
-7. Regenera el ID de sesión con `session_regenerate_id(true)`.
-8. Guarda en la sesión: id, nombre, usuario, correo, rol, hora de inicio,
+6. Verifica la contraseña con `password_verify()`.
+7. Si el hash necesita actualización, aplica `password_hash()` de nuevo.
+8. Regenera el ID de sesión con `session_regenerate_id(true)`.
+9. Guarda en la sesión: id, nombre, usuario, correo, rol, hora de inicio,
    última actividad, User-Agent e IP.
-9. Actualiza `ultimo_login`, reinicia intentos fallidos y registra auditoría.
+10. Actualiza `ultimo_login` y registra auditoría. El conteo de fuerza bruta
+    vive solo en `intentos_login`, no en la fila del usuario.
 
 ### 5.3 Mensajes y bloqueo
 
