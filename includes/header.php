@@ -74,7 +74,9 @@ $cssVersion = @filemtime(__DIR__ . '/../assets/css/estilos.css') ?: 1;
         </a>
 
         <?php if ($autenticado): ?>
-            <span class="topbar__usuario"><?= e($_SESSION['nombre'] ?? '') ?></span>
+            <span class="topbar__usuario" title="<?= e($_SESSION['nombre'] ?? '') ?>">
+                <?= e($_SESSION['nombre'] ?? '') ?>
+            </span>
         <?php endif; ?>
     </div>
 </header>

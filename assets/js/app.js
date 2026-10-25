@@ -75,5 +75,17 @@
         sincronizarAria();
     });
 
+    // La altura real de la barra superior define donde empieza el sidebar.
+    var topbar = document.querySelector('.topbar');
+    function ajustarAltoTopbar() {
+        if (!topbar) {
+            return;
+        }
+        document.documentElement.style.setProperty('--alto-topbar', topbar.offsetHeight + 'px');
+    }
+    ajustarAltoTopbar();
+    window.addEventListener('resize', ajustarAltoTopbar);
+    window.addEventListener('load', ajustarAltoTopbar);
+
     sincronizarAria();
 })();
