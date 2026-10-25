@@ -11,3 +11,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    volumes:
+      # Monta el código del repo: cambios en vivo y .htaccess local.
+      - .:/var/www/html

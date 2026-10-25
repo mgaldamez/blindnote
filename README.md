@@ -93,6 +93,42 @@ La configuración se pasa por variables de entorno (`DB_HOST`, `DB_USUARIO`,
 usa esos valores y, si no existen, mantiene los de Laragon. Para fijar una
 versión concreta de la imagen: `BLINDNOTE_TAG=sha-abc1234 docker compose up -d`.
 
+#### Variables de entorno (`.env`)
+
+Docker Compose lee automáticamente un archivo `.env` en esta carpeta y
+sobreescribe los valores por defecto del compose. Creá ese archivo con las
+variables que quieras cambiar (todas son opcionales):
+
+```bash
+# .env  (no se versiona)
+DB_CLAVE=una_clave_mejor
+WEB_PORT=8080
+```
+
+| Variable | Valor por defecto | Para qué sirve |
+|---|---|---|
+| `BLINDNOTE_TAG` | `latest` | Tag de la imagen de GHCR (`main`, `sha-<commit>`, `vX.Y.Z`) |
+| `WEB_PORT` | `8080` | Puerto publicado del sitio |
+| `DB_HOST` | `db` | Servicio MySQL del compose (fuera de Docker: `127.0.0.1`) |
+| `DB_PORT` | `3306` | Puerto de MySQL |
+| `DB_NOMBRE` | `seguridad_web` | Nombre de la base (`MYSQL_DATABASE`) |
+| `DB_USUARIO` | `blindnote` | Usuario de la base (`MYSQL_USER`); no puede ser `root` |
+| `DB_CLAVE` | `blindnote` | Contraseña de ese usuario (`MYSQL_PASSWORD`) |
+| `DB_CHARSET` | `utf8mb4` | Juego de caracteres de la conexión |
+| `MYSQL_ROOT_PASSWORD` | `root` | Contraseña de root **del contenedor** |
+| `COOKIE_SOLO_HTTPS` | `false` | Cookie de sesión sólo por HTTPS |
+| `MODO_DEBUG` | `true` | Detalle de errores (en producción: `false`) |
+
+Esos valores son los que el código tiene quemados hoy: dejarlos igual reproduce
+el comportamiento actual.
+
+> `.env` está en `.gitignore` y en `.dockerignore`: nunca se versiona ni entra
+> en la imagen. Sí conviene versionar un `.env.example` sin secretos: `.env.*`
+> está ignorado salvo esa excepción.
+>
+> El servidor embebido de PHP (`php -S`) **no** lee `.env`: en ese modo hay que
+> exportar las variables en el entorno o editar `config/config.php`.
+
 ### Configuración de la base de datos
 
 Si tu MySQL usa otro usuario, puerto o contraseña, edita `config/config.php`:

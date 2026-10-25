@@ -2,7 +2,10 @@
 #
 #   docker compose up -d              # usa ghcr.io/mgaldamez/blindnote:latest
 #   docker compose pull && docker compose up -d   # trae la última publicada
-#   BLINDNOTE_TAG=sha-abc1234 docker compose up -d # fija una versión
+#
+# Los valores se pueden sobreescribir con un archivo .env en esta carpeta
+# (Docker Compose lo lee solo). Ver .env.example y la sección de variables de
+# entorno del README; .env nunca se versiona.
 #
 # Para construir desde el código fuente (desarrollo y CI) usa el override:
 #   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
@@ -14,15 +17,17 @@ services:
   web:
     image: ghcr.io/mgaldamez/blindnote:${BLINDNOTE_TAG:-latest}
     ports:
-      - "8080:80"
+      - "${WEB_PORT:-8080}:80"
     environment:
+      # DB_HOST/DB_PORT los fija la red de Compose.
       DB_HOST: db
       DB_PORT: "3306"
-      DB_NOMBRE: seguridad_web
-      DB_USUARIO: blindnote
-      DB_CLAVE: blindnote
-      COOKIE_SOLO_HTTPS: "false"
-      MODO_DEBUG: "true"
+      DB_NOMBRE: ${DB_NOMBRE:-seguridad_web}
+      DB_USUARIO: ${DB_USUARIO:-blindnote}
+      DB_CLAVE: ${DB_CLAVE:-blindnote}
+      DB_CHARSET: ${DB_CHARSET:-utf8mb4}
+      COOKIE_SOLO_HTTPS: ${COOKIE_SOLO_HTTPS:-false}
+      MODO_DEBUG: ${MODO_DEBUG:-true}
     depends_on:
       db:
         condition: service_healthy
@@ -30,15 +35,15 @@ services:
   db:
     image: mysql:8.0
     environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: seguridad_web
-      MYSQL_USER: blindnote
-      MYSQL_PASSWORD: blindnote
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      MYSQL_DATABASE: ${DB_NOMBRE:-seguridad_web}
+      MYSQL_USER: ${DB_USUARIO:-blindnote}
+      MYSQL_PASSWORD: ${DB_CLAVE:-blindnote}
     volumes:
       - db_data:/var/lib/mysql
       - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -proot --silent"]
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p\"$$MYSQL_ROOT_PASSWORD\" --silent"]
       interval: 5s
       timeout: 5s
       retries: 20

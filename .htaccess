@@ -20,6 +20,11 @@ Options -Indexes
     Require all denied
 </FilesMatch>
 
+# No servir ningun archivo oculto (.env, .git, .dockerignore, ...)
+<FilesMatch "^\\.">
+    Require all denied
+</FilesMatch>
+
 # Bloquear acceso directo a carpetas internas
 RedirectMatch 403 ^/seguridad-web/(config|includes|database)/
 
