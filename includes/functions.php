@@ -162,9 +162,70 @@ function redirigir(string $ruta): never
     exit;
 }
 
+/**
+ * Indica si una direccion es un proxy confiable (loopback o red privada).
+ *
+ * Detras de nginx/Caddy el contenedor ve la IP del proxy, no la del visitante.
+ * Solo en ese caso se acepta la cabecera que trae la IP real: si la peticion
+ * llega directo desde Internet, la cabecera es falsificable y se ignora.
+ */
+function es_proxy_confiable(string $ip): bool
+{
+    if ($ip === '::1') {
+        return true;
+    }
+
+    if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) === false) {
+        return false;
+    }
+
+    return str_starts_with($ip, '127.')
+        || str_starts_with($ip, '10.')
+        || str_starts_with($ip, '192.168.')
+        || preg_match('/^172\.(1[6-9]|2[0-9]|3[01])\./', $ip) === 1;
+}
+
+/**
+ * IP del cliente, respetando el proxy inverso cuando corresponde.
+ *
+ * El despliegue publica la app solo en loopback y nginx hace de proxy: ahi
+ * REMOTE_ADDR es el proxy y la IP real llega en X-Real-IP (o en el ultimo
+ * elemento de X-Forwarded-For, el que agrega el proxy). Sin esta lectura el
+ * control de fuerza bruta por IP ve una sola IP para todo el sitio.
+ *
+ * Requisito: el puerto de la app NO debe estar expuesto al publico, porque
+ * cualquiera que la alcance directo desde una red privada podria falsificar
+ * la cabecera y saltear el limite por IP.
+ */
 function ip_cliente(): string
 {
-    return $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+    $remota = (string) ($_SERVER['REMOTE_ADDR'] ?? '0.0.0.0');
+    if (filter_var($remota, FILTER_VALIDATE_IP) === false) {
+        $remota = '0.0.0.0';
+    }
+
+    if (!es_proxy_confiable($remota)) {
+        return $remota;
+    }
+
+    // X-Real-IP lo escribe el proxy con $remote_addr: no es falsificable.
+    $real = $_SERVER['HTTP_X_REAL_IP'] ?? '';
+    if (is_string($real) && filter_var(trim($real), FILTER_VALIDATE_IP) !== false) {
+        return trim($real);
+    }
+
+    // X-Forwarded-For puede ser una lista: el ultimo elemento es el que agrega
+    // el proxy (los anteriores los puede inyectar el cliente).
+    $cadena = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? '';
+    if (is_string($cadena) && $cadena !== '') {
+        $partes = explode(',', $cadena);
+        $ultima = trim((string) end($partes));
+        if (filter_var($ultima, FILTER_VALIDATE_IP) !== false) {
+            return $ultima;
+        }
+    }
+
+    return $remota;
 }
 
 function post(string $campo, string $default = ''): string

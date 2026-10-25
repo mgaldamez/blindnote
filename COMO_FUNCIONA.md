@@ -144,6 +144,11 @@ Ubicada en `includes/auth.php`:
 
 - Todos los fallos de credenciales muestran el mismo texto:
   “Usuario o contraseña incorrectos.”
+- `ip_cliente()` respeta el proxy inverso: si la petición viene de loopback o de
+  una red privada (el proxy), toma la IP real de `X-Real-IP` o del último
+  elemento de `X-Forwarded-For`. Si llega directo desde Internet usa
+  `REMOTE_ADDR`, porque la cabecera es falsificable. **Requisito:** publicar el
+  puerto de la app solo en `127.0.0.1`, nunca en `0.0.0.0`.
 - Tras 5 intentos fallidos en 15 minutos **para esa cuenta y esa IP** se
   bloquea el acceso de esa combinación.
 - `intentos_fallidos_recientes()` cuenta con una condición conjuntiva

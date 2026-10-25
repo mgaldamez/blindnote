@@ -291,6 +291,13 @@ certificado (válido o autofirmado):
 5. Verifica el acceso con `https://tu-dominio/` y comprueba que la cookie de
    sesión tenga el atributo `Secure`.
 
+**Proxy inverso (VPS):** con nginx/Caddy delante, publicá la app solo en
+loopback (`WEB_PORT=127.0.0.1:8080`) y pasá `X-Real-IP $remote_addr` (o
+`X-Forwarded-For $remote_addr`, sobrescribiendo). `ip_cliente()` confía en esa
+cabecera únicamente cuando la petición viene de loopback o red privada; si el
+puerto queda expuesto, la cabecera se puede falsificar y el límite por IP se
+vuelve inútil. HSTS y las cabeceras de TLS van en el proxy.
+
 > Activa HSTS únicamente cuando HTTPS funcione de forma estable.
 
 ## 9. Integración continua (GitHub Actions)

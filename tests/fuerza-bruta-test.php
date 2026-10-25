@@ -264,6 +264,42 @@ if (MAX_INTENTOS_POR_IP > 0) {
     echo "  SKIP tope por IP deshabilitado (MAX_INTENTOS_POR_IP = 0)\n";
 }
 
+/* ---------------- S4: IP real del cliente detras del proxy ---------------- */
+
+$servidorOriginal = $_SERVER;
+$casosIp = [
+    'proxy loopback + X-Real-IP' => [
+        ['REMOTE_ADDR' => '127.0.0.1', 'HTTP_X_REAL_IP' => '203.0.113.7'], '203.0.113.7',
+    ],
+    'proxy de red privada + X-Real-IP' => [
+        ['REMOTE_ADDR' => '172.18.0.1', 'HTTP_X_REAL_IP' => '203.0.113.8'], '203.0.113.8',
+    ],
+    'cliente publico: el header se ignora' => [
+        ['REMOTE_ADDR' => '198.51.100.9', 'HTTP_X_REAL_IP' => '203.0.113.9'], '198.51.100.9',
+    ],
+    'proxy sin cabeceras: queda su IP' => [
+        ['REMOTE_ADDR' => '172.18.0.1'], '172.18.0.1',
+    ],
+    'header invalido: se ignora' => [
+        ['REMOTE_ADDR' => '172.18.0.1', 'HTTP_X_REAL_IP' => 'no-es-una-ip'], '172.18.0.1',
+    ],
+    'X-Forwarded-For: vale el ultimo (el del proxy)' => [
+        ['REMOTE_ADDR' => '172.18.0.1', 'HTTP_X_FORWARDED_FOR' => '1.1.1.1, 203.0.113.10'], '203.0.113.10',
+    ],
+];
+
+foreach ($casosIp as $caso => [$servidor, $esperada]) {
+    $_SERVER = $servidor;
+    $obtenida = ip_cliente();
+    if ($obtenida === $esperada) {
+        echo "  OK   $caso (obtenido $obtenida)\n";
+        continue;
+    }
+    $fallos++;
+    echo "  FALLA $caso (esperado $esperada, obtenido $obtenida)\n";
+}
+$_SERVER = $servidorOriginal;
+
 /* ---------------- Limpieza ---------------- */
 
 limpiar();
