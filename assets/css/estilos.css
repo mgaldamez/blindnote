@@ -262,3 +262,16 @@ code {
     color: #fff;
     font-weight: 600;
 }
+
+.tarjeta__cabecera {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.tabla__acciones {
+    white-space: nowrap;
+}

@@ -198,6 +198,155 @@ function es_admin_activo(int $usuarioId): bool
 }
 
 /**
+ * Valida los datos de un usuario (alta y edicion).
+ *
+ * @param array<string,mixed> $datos
+ * @return list<string> mensajes de error; vacio si esta todo bien
+ */
+function validar_datos_usuario(array $datos, ?int $idExcluir = null): array
+{
+    $errores  = [];
+    $nombre   = trim((string) ($datos['nombre'] ?? ''));
+    $email    = trim((string) ($datos['email'] ?? ''));
+    $username = trim((string) ($datos['username'] ?? ''));
+
+    if (mb_strlen($nombre) < 3) {
+        $errores[] = 'El nombre debe tener al menos 3 caracteres.';
+    }
+    if (filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
+        $errores[] = 'El correo electronico no es valido.';
+    }
+    if (preg_match('/^[a-zA-Z0-9_.]{3,50}$/', $username) !== 1) {
+        $errores[] = 'El usuario solo admite letras, numeros, punto y guion bajo (3-50).';
+    }
+
+    if ($errores === []) {
+        $sql = 'SELECT id FROM usuarios WHERE (username = :u OR email = :e)';
+        $parametros = [':u' => $username, ':e' => $email];
+        if ($idExcluir !== null) {
+            $sql .= ' AND id <> :id';
+            $parametros[':id'] = $idExcluir;
+        }
+        $stmt = db()->prepare($sql . ' LIMIT 1');
+        $stmt->execute($parametros);
+        if ($stmt->fetch() !== false) {
+            $errores[] = 'Ese usuario o correo ya esta registrado.';
+        }
+    }
+
+    return $errores;
+}
+
+/**
+ * Da de alta un usuario con contrasena temporal.
+ * Solo puede hacerlo un administrador activo (defensa en profundidad: la
+ * pantalla ya exige el rol, la funcion lo vuelve a comprobar).
+ *
+ * @param array<string,mixed> $datos nombre, email, username, rol, clave, clave2
+ * @return array{ok:bool, errores:list<string>, id:int}
+ */
+function crear_usuario_admin(array $datos, int $actorId): array
+{
+    if (!es_admin_activo($actorId)) {
+        return ['ok' => false, 'errores' => ['Solo un administrador activo puede crear usuarios.'], 'id' => 0];
+    }
+
+    $errores = validar_datos_usuario($datos);
+
+    $clave = (string) ($datos['clave'] ?? '');
+    foreach (validar_contrasena($clave) as $error) {
+        $errores[] = $error;
+    }
+    if (array_key_exists('clave2', $datos) && (string) $datos['clave2'] !== $clave) {
+        $errores[] = 'Las contrasenas no coinciden.';
+    }
+
+    if ($errores !== []) {
+        return ['ok' => false, 'errores' => $errores, 'id' => 0];
+    }
+
+    $rol = in_array((string) ($datos['rol'] ?? ''), ['admin', 'usuario'], true)
+        ? (string) $datos['rol']
+        : 'usuario';
+
+    $username = trim((string) $datos['username']);
+    $stmt = db()->prepare(
+        'INSERT INTO usuarios (nombre, email, username, password_hash, rol, activo, debe_cambiar_clave)
+         VALUES (:nombre, :email, :username, :hash, :rol, 1, 1)'
+    );
+    $stmt->execute([
+        ':nombre'   => trim((string) $datos['nombre']),
+        ':email'    => trim((string) $datos['email']),
+        ':username' => $username,
+        ':hash'     => password_hash($clave, PASSWORD_BCRYPT, ['cost' => BCRYPT_COST]),
+        ':rol'      => $rol,
+    ]);
+
+    $id = (int) db()->lastInsertId();
+    registrar_auditoria($actorId, 'USUARIO_CREADO', 'id=' . $id . ' usuario=' . $username);
+
+    return ['ok' => true, 'errores' => [], 'id' => $id];
+}
+
+/**
+ * Actualiza nombre, correo, usuario y rol de una cuenta.
+ * Respeta las guardas de auto-bloqueo: nadie se quita su propio rol admin ni
+ * deja el sistema sin administradores activos.
+ *
+ * @param array<string,mixed> $datos
+ * @return array{ok:bool, errores:list<string>}
+ */
+function actualizar_usuario_admin(array $datos, int $objetivoId, int $actorId): array
+{
+    if (!es_admin_activo($actorId)) {
+        return ['ok' => false, 'errores' => ['Solo un administrador activo puede editar usuarios.']];
+    }
+
+    $stmt = db()->prepare('SELECT id, nombre, username, email, rol, activo FROM usuarios WHERE id = :id');
+    $stmt->execute([':id' => $objetivoId]);
+    $objetivo = $stmt->fetch();
+    if ($objetivo === false) {
+        return ['ok' => false, 'errores' => ['El usuario no existe.']];
+    }
+
+    $errores = validar_datos_usuario($datos, $objetivoId);
+
+    $rolSolicitado = (string) ($datos['rol'] ?? '');
+    $rol = in_array($rolSolicitado, ['admin', 'usuario'], true) ? $rolSolicitado : (string) $objetivo['rol'];
+
+    if ($rol !== $objetivo['rol'] && !puede_cambiar_rol($actorId, $objetivoId, $rol)) {
+        $errores[] = 'No se puede cambiar ese rol: nadie puede quitarse el suyo y el sistema '
+            . 'no puede quedar sin administradores activos.';
+    }
+
+    if ($errores !== []) {
+        return ['ok' => false, 'errores' => $errores];
+    }
+
+    db()->prepare(
+        'UPDATE usuarios SET nombre = :nombre, email = :email, username = :username, rol = :rol
+          WHERE id = :id'
+    )->execute([
+        ':nombre'   => trim((string) $datos['nombre']),
+        ':email'    => trim((string) $datos['email']),
+        ':username' => trim((string) $datos['username']),
+        ':rol'      => $rol,
+        ':id'       => $objetivoId,
+    ]);
+
+    // Si el admin se edita a si mismo, la sesion no puede quedar con datos viejos.
+    if ($objetivoId === $actorId) {
+        $_SESSION['nombre']   = trim((string) $datos['nombre']);
+        $_SESSION['username'] = trim((string) $datos['username']);
+        $_SESSION['email']    = trim((string) $datos['email']);
+    }
+
+    registrar_auditoria($actorId, 'USUARIO_EDITADO', 'id=' . $objetivoId . ' rol=' . $rol);
+
+    return ['ok' => true, 'errores' => []];
+}
+
+/**
  * Decide si el actor puede desactivar (soft delete) al usuario objetivo.
  * Nadie se desactiva a si mismo y el sistema no puede quedar sin admins.
  */

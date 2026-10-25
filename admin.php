@@ -70,8 +70,24 @@ require __DIR__ . '/includes/header.php';
     <p>Area restringida a usuarios con rol <strong>admin</strong>.</p>
 </section>
 
+<?php
+$aviso = (string) ($_GET['ok'] ?? '');
+$mensajesAviso = [
+    'creado'   => 'Usuario creado. Tendra que cambiar la contrasena en su primer login.',
+    'editado'  => 'Usuario actualizado.',
+    'activado' => 'Usuario reactivado.',
+    'desactivado' => 'Usuario desactivado (soft delete): conserva su historial.',
+];
+?>
+<?php if (isset($mensajesAviso[$aviso])): ?>
+    <div class="alerta alerta--info"><?= e($mensajesAviso[$aviso]) ?></div>
+<?php endif; ?>
+
 <div class="tarjeta">
-    <h2>Usuarios (<?= (int) $total ?>)</h2>
+    <div class="tarjeta__cabecera">
+        <h2>Usuarios (<?= (int) $total ?>)</h2>
+        <a class="btn btn--primario" href="usuarios_form.php">Nuevo usuario</a>
+    </div>
 
     <form method="get" action="admin.php" class="filtros">
         <div class="campo">
@@ -109,7 +125,7 @@ require __DIR__ . '/includes/header.php';
                 <thead>
                     <tr>
                         <th>#</th><th>Nombre</th><th>Usuario</th><th>Correo</th>
-                        <th>Rol</th><th>Activo</th><th>Ultimo login</th>
+                        <th>Rol</th><th>Activo</th><th>Ultimo login</th><th></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -122,6 +138,9 @@ require __DIR__ . '/includes/header.php';
                         <td><span class="badge badge--<?= e($u['rol']) ?>"><?= e($u['rol']) ?></span></td>
                         <td><?= ((int) $u['activo'] === 1) ? 'Si' : 'No' ?></td>
                         <td><?= e((string) ($u['ultimo_login'] ?? '—')) ?></td>
+                        <td class="tabla__acciones">
+                            <a class="btn" href="usuarios_form.php?id=<?= (int) $u['id'] ?>">Editar</a>
+                        </td>
                     </tr>
                 <?php endforeach; ?>
                 </tbody>
