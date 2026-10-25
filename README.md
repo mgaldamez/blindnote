@@ -1,5 +1,7 @@
 # BlindNote
 
+[![CI](https://github.com/mgaldamez/blindnote/actions/workflows/ci.yml/badge.svg)](https://github.com/mgaldamez/blindnote/actions/workflows/ci.yml)
+
 Sitio web seguro desarrollado para la asignatura **Diseño de Seguridad de Redes**
 (Universidad Doctor Andrés Bello — Ingeniería en Sistemas).
 
@@ -146,6 +148,7 @@ seguridad-web/
 ├─ database/schema.sql     Esquema de la base de datos
 ├─ tests/
 │  └─ fuerza-bruta-test.php  Regresión del bloqueo por usuario e IP
+├─ .github/workflows/ci.yml  Integración continua: build, checks y publicación
 └─ .htaccess               Cabeceras de seguridad y protección de carpetas
 ```
 
@@ -236,7 +239,32 @@ certificado (válido o autofirmado):
 
 > Activa HSTS únicamente cuando HTTPS funcione de forma estable.
 
-## 9. Aviso
+## 9. Integración continua (GitHub Actions)
+
+El workflow `.github/workflows/ci.yml` corre en cada **push** y **pull request**:
+
+1. Construye la imagen con `docker compose up --build --wait` (levanta MySQL y
+   espera el *healthcheck*).
+2. Ejecuta `php -l` sobre todos los archivos PHP.
+3. Corre la regresión del control de fuerza bruta (`tests/fuerza-bruta-test.php`)
+   contra la base real, y baja el stack al terminar.
+
+En push a `main` (o en un tag `vX.Y.Z`) además publica la imagen en GitHub
+Container Registry, con `cache` entre ejecuciones:
+
+```bash
+docker pull ghcr.io/mgaldamez/blindnote:latest
+docker run --rm -p 8080:80 ghcr.io/mgaldamez/blindnote:latest
+```
+
+Tags generados: `latest` (rama por defecto), el nombre de la rama, `sha-<corto>`
+y `vX.Y.Z` para tags semánticos. La imagen requiere una base MySQL accesible:
+usa el `docker-compose.yml` del repositorio para levantar el par completo.
+
+> El paquete de GHCR se crea **privado**. Para hacerlo público: perfil →
+> Packages → `blindnote` → Package settings → Change visibility.
+
+## 10. Aviso
 
 Proyecto **académico**. Ejecuta esta aplicación solo en un entorno local o de
 demostración. No la expongas a Internet sin HTTPS, sin revisar la política de
