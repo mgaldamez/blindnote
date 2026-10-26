@@ -81,9 +81,13 @@ CREATE TABLE IF NOT EXISTS notas (
     usuario_id INT UNSIGNED NOT NULL,
     titulo     VARCHAR(150) NOT NULL,
     contenido  TEXT         NOT NULL,
+    -- Completada: booleano + fecha (se limpia al reabrir).
+    completada    TINYINT(1) NOT NULL DEFAULT 0,
+    completada_en DATETIME   NULL,
     creado_en  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     KEY idx_notas_usuario (usuario_id),
+    KEY idx_notas_estado  (usuario_id, completada),
     CONSTRAINT fk_notas_usuario FOREIGN KEY (usuario_id)
         REFERENCES usuarios(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
