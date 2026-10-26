@@ -16,34 +16,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_verificar($_POST['csrf_token'] ?? null);
     $accion = post('accion');
 
-    if ($accion === 'crear') {
-        $titulo    = post('titulo');
-        $contenido = (string) ($_POST['contenido'] ?? '');
-
-        if ($titulo === '' || mb_strlen($titulo) > 150) {
-            $errores[] = 'El titulo es obligatorio (maximo 150 caracteres).';
-        }
-        if ($contenido === '') {
-            $errores[] = 'El contenido no puede estar vacio.';
-        }
-
-        if (!$errores) {
-            // Sentencia preparada -> inmune a inyeccion SQL.
-            $stmt = db()->prepare(
-                'INSERT INTO notas (usuario_id, titulo, contenido)
-                 VALUES (:uid, :titulo, :contenido)'
-            );
-            $stmt->execute([':uid' => $usuarioId, ':titulo' => $titulo, ':contenido' => $contenido]);
-            registrar_auditoria($usuarioId, 'NOTA_CREADA', mb_substr($titulo, 0, 100));
-            redirigir('notas.php?ok=1');
-        }
-    } elseif ($accion === 'eliminar') {
+    if ($accion === 'eliminar') {
         $id = (int) post('id');
         // Solo borra si la nota pertenece al usuario autenticado (control de acceso / IDOR).
         $stmt = db()->prepare('DELETE FROM notas WHERE id = :id AND usuario_id = :uid');
         $stmt->execute([':id' => $id, ':uid' => $usuarioId]);
         registrar_auditoria($usuarioId, 'NOTA_ELIMINADA', 'id=' . $id);
-        redirigir('notas.php?ok=2');
+        redirigir('notas.php?ok=eliminada');
     }
 }
 
@@ -59,8 +38,18 @@ require __DIR__ . '/includes/header.php';
     <p>Todo el contenido se almacena y se muestra de forma segura.</p>
 </section>
 
-<?php if (isset($_GET['ok'])): ?>
-    <div class="alerta alerta--ok">Operacion realizada correctamente.</div>
+<?php
+$aviso = (string) ($_GET['ok'] ?? '');
+$mensajesOk = [
+    'creada'   => 'Nota creada.',
+    'editada'  => 'Nota actualizada.',
+    'eliminada' => 'Nota eliminada.',
+    'completada' => 'Nota marcada como completada.',
+    'reabierta' => 'Nota reabierta.',
+];
+?>
+<?php if (isset($mensajesOk[$aviso])): ?>
+    <div class="alerta alerta--ok"><?= e($mensajesOk[$aviso]) ?></div>
 <?php endif; ?>
 
 <?php if ($errores): ?>
@@ -69,26 +58,11 @@ require __DIR__ . '/includes/header.php';
     </div>
 <?php endif; ?>
 
-<div class="grid grid--2">
-    <div class="tarjeta">
-        <h2>Nueva nota</h2>
-        <form method="post" action="notas.php">
-            <?= csrf_campo() ?>
-            <input type="hidden" name="accion" value="crear">
-            <div class="campo">
-                <label for="titulo">Titulo</label>
-                <input type="text" id="titulo" name="titulo" maxlength="150" required>
-            </div>
-            <div class="campo">
-                <label for="contenido">Contenido</label>
-                <textarea id="contenido" name="contenido" rows="5" required
-                    placeholder="Escribe aqui el contenido de tu nota"></textarea>
-            </div>
-            <button type="submit" class="btn btn--primario">Guardar nota</button>
-        </form>
+<div class="tarjeta">
+    <div class="tarjeta__cabecera">
+        <h2>Notas guardadas (<?= count($notas) ?>)</h2>
+        <a class="btn btn--primario" href="nota_form.php">Nueva nota</a>
     </div>
-
-    <div class="tarjeta">
         <h2>Notas guardadas (<?= count($notas) ?>)</h2>
         <?php if (!$notas): ?>
             <p class="vacio">Aun no tienes notas.</p>
@@ -101,8 +75,9 @@ require __DIR__ . '/includes/header.php';
                             <p><?= e($n['contenido']) ?></p>
                             <span class="nota__fecha"><?= e((string) $n['creado_en']) ?></span>
                         </div>
+                        <a class="btn btn--sm" href="nota_form.php?id=<?= (int) $n['id'] ?>">Editar</a>
                         <form method="post" action="notas.php"
-                              onsubmit="return confirm('¿Eliminar esta nota?');">
+                              data-confirmar="¿Eliminar esta nota?">
                             <?= csrf_campo() ?>
                             <input type="hidden" name="accion" value="eliminar">
                             <input type="hidden" name="id" value="<?= (int) $n['id'] ?>">
@@ -112,6 +87,5 @@ require __DIR__ . '/includes/header.php';
                 <?php endforeach; ?>
             </ul>
         <?php endif; ?>
-    </div>
 </div>
 <?php require __DIR__ . '/includes/footer.php'; ?>

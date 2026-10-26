@@ -48,3 +48,8 @@ L1. "el siguiente feat lo trabajaremos en otra rama, las notas se deben poder
 
 L2. Decisiones: booleano + fecha de completado; formulario aparte para editar;
     pestañas Pendientes/Completadas en `notas.php`; reabrir permitido.
+
+L3. Slices de revisión (el primer commit ya superó las ~400 líneas por los
+    tests). slice 1 = T1 (esquema, migración, funciones y 27 casos) → `b68c242`;
+    slice 2 = T2 (formulario de alta/edición y limpieza del alta en línea);
+    slice 3 = T3+T4 (pestañas, acciones de estado y documentación).
