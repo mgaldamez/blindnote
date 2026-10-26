@@ -178,7 +178,8 @@ seguridad-web/
 ├─ register.php            Fase 3: registro con política de contraseñas
 ├─ logout.php              Fase 3: cierre de sesión seguro (POST + CSRF)
 ├─ dashboard.php           Panel con medidas de seguridad activas
-├─ notas.php               CRUD que demuestra mitigación de SQLi/XSS/CSRF/IDOR
+├─ notas.php               Notas: pendientes y completadas, con acciones
+├─ nota_form.php           Alta y edición de notas
 ├─ admin.php               Administración: usuarios paginados y auditoría
 ├─ auditoria.php           Auditoría paginada con filtros (solo admin)
 ├─ auditoria_csv.php       Exportación CSV de la auditoría filtrada
@@ -204,7 +205,8 @@ seguridad-web/
 ├─ tests/
 │  ├─ fuerza-bruta-test.php  Regresión del bloqueo por cuenta e IP
 │  ├─ usuarios-crud-test.php Regresión del CRUD y de las guardas de admin
-│  └─ auditoria-test.php     Regresión de la auditoría y del CSV
+│  ├─ auditoria-test.php     Regresión de la auditoría y del CSV
+│  └─ notas-test.php         Regresión de la edición y del completado
 ├─ .github/workflows/ci.yml  Integración continua: build, checks y publicación
 ├─ deploy/nginx.conf.example  Proxy inverso de referencia (solo 443)
 └─ .htaccess               Cabeceras de seguridad y protección de carpetas
@@ -321,7 +323,7 @@ El workflow `.github/workflows/ci.yml` corre en cada **push** y **pull request**
    (`web` no define healthcheck, así que `--wait` no prueba que Apache sirva la
    aplicación).
 3. Ejecuta `php -l` sobre todos los archivos PHP.
-4. Corre la regresión del control de fuerza bruta (`tests/fuerza-bruta-test.php`)
+4. Corre las regresiones (fuerza bruta, usuarios, auditoría y notas)
    contra la base real, y baja el stack al terminar.
 
 En push a `main` (o en un tag `vX.Y.Z`) además publica la imagen en GitHub

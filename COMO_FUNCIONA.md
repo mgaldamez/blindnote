@@ -263,20 +263,33 @@ el rol. Ocultar el enlace en el menú no se considera un control suficiente.
 
 ## 9. Notas personales y anti-IDOR
 
-`notas.php` permite crear y eliminar notas. Cada operación usa el ID de la
-sesión, nunca un ID enviado por el usuario para decidir la propiedad:
+`notas.php` lista las notas en dos pestañas con contador (**Pendientes** y
+**Completadas**) y cada fila ofrece Editar, Completar/Reabrir y Eliminar. El
+alta y la edición viven en `nota_form.php`; toda la lógica y las consultas están
+en `includes/functions.php` (`crear_nota`, `obtener_nota`, `actualizar_nota`,
+`cambiar_estado_nota`, `listar_notas`, `contar_notas_por_estado`).
+
+Cada operación usa el ID de la sesión, nunca un ID enviado por el usuario para
+decidir la propiedad:
 
 ```sql
 -- Listar
-SELECT ... FROM notas WHERE usuario_id = :uid ORDER BY id DESC;
+SELECT ... FROM notas WHERE usuario_id = :uid AND completada = :estado;
 
--- Eliminar
+-- Editar, completar o eliminar
+UPDATE notas SET ... WHERE id = :id AND usuario_id = :uid;
 DELETE FROM notas WHERE id = :id AND usuario_id = :uid;
 ```
 
 Si un atacante cambia el `id` de la nota en el POST, la condición
-`usuario_id = :uid` impide borrar notas ajenas. Esto mitiga IDOR (Insecure
-Direct Object Reference).
+`usuario_id = :uid` impide tocar notas ajenas, y `obtener_nota()` devuelve
+`null` (la pantalla responde 404). Esto mitiga IDOR (Insecure Direct Object
+Reference).
+
+Estado de completado: `completada` (0/1) y `completada_en` (fecha). Completar
+estampa la fecha; reabrir la limpia y la nota vuelve a la lista de pendientes.
+Cada acción queda auditada (`NOTA_CREADA`, `NOTA_EDITADA`, `NOTA_COMPLETADA`,
+`NOTA_REABIERTA`, `NOTA_ELIMINADA`).
 
 El contenido se muestra con `e()`:
 
