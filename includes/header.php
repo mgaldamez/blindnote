@@ -85,41 +85,41 @@ $cssVersion = @filemtime(__DIR__ . '/../assets/css/estilos.css') ?: 1;
 <?php if ($autenticado): ?>
     <aside class="sidebar" id="navegacion" aria-label="Navegacion principal">
         <div class="sidebar__interior">
-        <nav class="nav-secciones">
-            <div class="nav-seccion">
-                <p class="nav-seccion__titulo">Principal</p>
-                <?php
-                $enlaceNav('dashboard.php', 'Panel', 'panel');
-                $enlaceNav('notas.php', 'Notas', 'notas');
-                ?>
-            </div>
-
-            <?php if ($esAdmin): ?>
+            <nav class="nav-secciones">
                 <div class="nav-seccion">
-                    <p class="nav-seccion__titulo">Administracion</p>
+                    <p class="nav-seccion__titulo">Principal</p>
                     <?php
-                    $enlaceNav('admin.php', 'Usuarios', 'usuarios');
-                    $enlaceNav('auditoria.php', 'Auditoria', 'auditoria');
+                    $enlaceNav('dashboard.php', 'Panel', 'panel');
+                    $enlaceNav('notas.php', 'Notas', 'notas');
                     ?>
                 </div>
-            <?php endif; ?>
 
-            <div class="nav-seccion">
-                <p class="nav-seccion__titulo">Proyecto</p>
-                <?php $enlaceNav('informe_fase4.php', 'Fase 4', 'proyecto'); ?>
+                <?php if ($esAdmin): ?>
+                    <div class="nav-seccion">
+                        <p class="nav-seccion__titulo">Administracion</p>
+                        <?php
+                        $enlaceNav('admin.php', 'Usuarios', 'usuarios');
+                        $enlaceNav('auditoria.php', 'Auditoria', 'auditoria');
+                        ?>
+                    </div>
+                <?php endif; ?>
+
+                <div class="nav-seccion">
+                    <p class="nav-seccion__titulo">Proyecto</p>
+                    <?php $enlaceNav('informe_fase4.php', 'Fase 4', 'proyecto'); ?>
+                </div>
+            </nav>
+
+            <div class="sidebar__pie">
+                <span class="sidebar__usuario">
+                    <?= e($_SESSION['nombre'] ?? '') ?>
+                    <em>(<?= e($_SESSION['rol'] ?? '') ?>)</em>
+                </span>
+                <form action="logout.php" method="post" class="inline">
+                    <?= csrf_campo() ?>
+                    <button type="submit" class="btn btn--peligro btn--sm">Salir</button>
+                </form>
             </div>
-        </nav>
-
-        <div class="sidebar__pie">
-            <span class="sidebar__usuario">
-                <?= e($_SESSION['nombre'] ?? '') ?>
-                <em>(<?= e($_SESSION['rol'] ?? '') ?>)</em>
-            </span>
-            <form action="logout.php" method="post" class="inline">
-                <?= csrf_campo() ?>
-                <button type="submit" class="btn btn--peligro btn--sm">Salir</button>
-            </form>
-        </div>
         </div>
     </aside>
 
