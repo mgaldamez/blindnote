@@ -163,6 +163,173 @@ function redirigir(string $ruta): never
 }
 
 /**
+ * Valida el titulo y el contenido de una nota.
+ *
+ * @return list<string> mensajes de error; vacio si esta todo bien
+ */
+function validar_nota(string $titulo, string $contenido): array
+{
+    $errores = [];
+
+    if (trim($titulo) === '') {
+        $errores[] = 'El titulo es obligatorio.';
+    } elseif (mb_strlen(trim($titulo)) > 150) {
+        $errores[] = 'El titulo no puede superar los 150 caracteres.';
+    }
+
+    if (trim($contenido) === '') {
+        $errores[] = 'El contenido no puede estar vacio.';
+    }
+
+    return $errores;
+}
+
+/**
+ * Crea una nota del usuario indicado.
+ *
+ * @return array{ok:bool, errores:list<string>, id:int}
+ */
+function crear_nota(int $usuarioId, string $titulo, string $contenido): array
+{
+    $errores = validar_nota($titulo, $contenido);
+    if ($errores !== []) {
+        return ['ok' => false, 'errores' => $errores, 'id' => 0];
+    }
+
+    $titulo = trim($titulo);
+    db()->prepare(
+        'INSERT INTO notas (usuario_id, titulo, contenido) VALUES (:uid, :titulo, :contenido)'
+    )->execute([':uid' => $usuarioId, ':titulo' => $titulo, ':contenido' => $contenido]);
+
+    $id = (int) db()->lastInsertId();
+    registrar_auditoria($usuarioId, 'NOTA_CREADA', mb_substr($titulo, 0, 100));
+
+    return ['ok' => true, 'errores' => [], 'id' => $id];
+}
+
+/**
+ * Devuelve una nota solo si pertenece al usuario (anti-IDOR).
+ *
+ * @return array<string,mixed>|null
+ */
+function obtener_nota(int $usuarioId, int $notaId): ?array
+{
+    $stmt = db()->prepare(
+        'SELECT id, titulo, contenido, completada, completada_en, creado_en
+           FROM notas
+          WHERE id = :id AND usuario_id = :uid'
+    );
+    $stmt->execute([':id' => $notaId, ':uid' => $usuarioId]);
+
+    return $stmt->fetch() ?: null;
+}
+
+/**
+ * Actualiza titulo y contenido de una nota propia.
+ *
+ * @return array{ok:bool, errores:list<string>}
+ */
+function actualizar_nota(int $usuarioId, int $notaId, string $titulo, string $contenido): array
+{
+    $actual = obtener_nota($usuarioId, $notaId);
+    if ($actual === null) {
+        return ['ok' => false, 'errores' => ['La nota no existe.']];
+    }
+
+    $errores = validar_nota($titulo, $contenido);
+    if ($errores !== []) {
+        return ['ok' => false, 'errores' => $errores];
+    }
+
+    $titulo = trim($titulo);
+    db()->prepare(
+        'UPDATE notas SET titulo = :titulo, contenido = :contenido
+          WHERE id = :id AND usuario_id = :uid'
+    )->execute([
+        ':titulo'    => $titulo,
+        ':contenido' => $contenido,
+        ':id'        => $notaId,
+        ':uid'       => $usuarioId,
+    ]);
+
+    registrar_auditoria($usuarioId, 'NOTA_EDITADA', 'id=' . $notaId);
+
+    return ['ok' => true, 'errores' => []];
+}
+
+/**
+ * Marca o desmarca una nota propia como completada.
+ * Al reabrir se limpia la fecha de completado.
+ *
+ * @return array{ok:bool, errores:list<string>}
+ */
+function cambiar_estado_nota(int $usuarioId, int $notaId, bool $completada): array
+{
+    if (obtener_nota($usuarioId, $notaId) === null) {
+        return ['ok' => false, 'errores' => ['La nota no existe.']];
+    }
+
+    db()->prepare(
+        'UPDATE notas
+            SET completada = :completada,
+                completada_en = ' . ($completada ? 'NOW()' : 'NULL') . '
+          WHERE id = :id AND usuario_id = :uid'
+    )->execute([
+        ':completada' => $completada ? 1 : 0,
+        ':id'         => $notaId,
+        ':uid'        => $usuarioId,
+    ]);
+
+    registrar_auditoria(
+        $usuarioId,
+        $completada ? 'NOTA_COMPLETADA' : 'NOTA_REABIERTA',
+        'id=' . $notaId
+    );
+
+    return ['ok' => true, 'errores' => []];
+}
+
+/**
+ * Lista las notas del usuario segun su estado.
+ * Las pendientes van por creacion y las completadas por fecha de completado.
+ *
+ * @return list<array<string,mixed>>
+ */
+function listar_notas(int $usuarioId, bool $completadas): array
+{
+    $orden = $completadas ? 'completada_en DESC, id DESC' : 'id DESC';
+    $stmt = db()->prepare(
+        'SELECT id, titulo, contenido, completada, completada_en, creado_en
+           FROM notas
+          WHERE usuario_id = :uid AND completada = :completada
+          ORDER BY ' . $orden
+    );
+    $stmt->execute([':uid' => $usuarioId, ':completada' => $completadas ? 1 : 0]);
+
+    return $stmt->fetchAll();
+}
+
+/**
+ * Cantidad de notas pendientes y completadas del usuario.
+ *
+ * @return array{pendientes:int, completadas:int}
+ */
+function contar_notas_por_estado(int $usuarioId): array
+{
+    $stmt = db()->prepare(
+        'SELECT SUM(completada = 0) AS pendientes, SUM(completada = 1) AS completadas
+           FROM notas WHERE usuario_id = :uid'
+    );
+    $stmt->execute([':uid' => $usuarioId]);
+    $fila = $stmt->fetch() ?: [];
+
+    return [
+        'pendientes'  => (int) ($fila['pendientes'] ?? 0),
+        'completadas' => (int) ($fila['completadas'] ?? 0),
+    ];
+}
+
+/**
  * Indica si una direccion es un proxy confiable (loopback o red privada).
  *
  * Detras de nginx/Caddy el contenedor ve la IP del proxy, no la del visitante.

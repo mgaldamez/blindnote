@@ -423,3 +423,27 @@ code {
     .nav-toggle__texto { display: none; }
     .topbar__usuario { display: none; }
 }
+
+/* ------------------------- Pestañas y estado de notas ------------------------- */
+.pestanas {
+    display: flex; gap: .3rem; flex-wrap: wrap;
+    margin-bottom: 1rem; border-bottom: 1px solid var(--borde);
+}
+.pestana {
+    padding: .5rem .9rem;
+    border: 1px solid transparent; border-bottom: none;
+    border-radius: var(--radio-sm) var(--radio-sm) 0 0;
+    color: var(--texto-suave); font-weight: 600; font-size: .9rem;
+    transition: background .12s ease, color .12s ease;
+}
+.pestana:hover { background: var(--panel-suave); color: var(--texto-fuerte); text-decoration: none; }
+.pestana--activa {
+    background: var(--panel); border-color: var(--borde);
+    color: var(--texto-fuerte); margin-bottom: -1px;
+}
+
+.nota__acciones { display: flex; flex-wrap: wrap; gap: .35rem; align-items: center; }
+.nota__acciones form { margin: 0; }
+
+.nota--completada { background: var(--panel-suave); }
+.nota--completada strong { text-decoration: line-through; color: var(--texto-suave); }

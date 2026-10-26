@@ -75,6 +75,17 @@
         sincronizarAria();
     });
 
+    // Confirmaciones declarativas: la CSP no permite JS en linea.
+    var conConfirmacion = document.querySelectorAll('[data-confirmar]');
+    Array.prototype.forEach.call(conConfirmacion, function (formulario) {
+        formulario.addEventListener('submit', function (evento) {
+            var mensaje = formulario.getAttribute('data-confirmar');
+            if (mensaje && !window.confirm(mensaje)) {
+                evento.preventDefault();
+            }
+        });
+    });
+
     // La altura real de la barra superior define donde empieza el sidebar.
     var topbar = document.querySelector('.topbar');
     function ajustarAltoTopbar() {
