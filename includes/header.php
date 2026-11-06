@@ -62,20 +62,18 @@ $cssVersion = @filemtime(__DIR__ . '/../assets/css/estilos.css') ?: 1;
             <span class="marca__logo">B</span>
             <span><?= e(APP_NOMBRE) ?></span>
         </a>
-
+        <?php if ($autenticado): ?>
+            <button class="nav-toggle" type="button" data-nav-toggle
+                    aria-controls="navegacion" aria-expanded="true" title="Mostrar u ocultar el menu">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+                     stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+                    <path d="M4 7h16M4 12h16M4 17h16"/>
+                </svg>
+                <span class="nav-toggle__texto">Menu</span>
+            </button>
+        <?php endif; ?>
 
         <div class="topbar__acciones">
-            <?php if ($autenticado): ?>
-                <button class="nav-toggle" type="button" data-nav-toggle
-                        aria-controls="navegacion" aria-expanded="true" title="Mostrar u ocultar el menu">
-                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
-                         stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
-                        <path d="M4 7h16M4 12h16M4 17h16"/>
-                    </svg>
-                    <span class="nav-toggle__texto">Menu</span>
-                </button>
-            <?php endif; ?>
-
             <button class="tema-toggle" type="button" data-tema-toggle title="Cambiar tema claro/oscuro" aria-label="Cambiar tema">
                 <svg class="tema-toggle__icono tema-toggle__icono--sol" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <circle cx="12" cy="12" r="5"></circle>
@@ -143,7 +141,7 @@ $cssVersion = @filemtime(__DIR__ . '/../assets/css/estilos.css') ?: 1;
                         <span class="sidebar__usuario-rol badge badge--<?= e($_SESSION['rol'] ?? 'usuario') ?>"><?= e($_SESSION['rol'] ?? '') ?></span>
                     </div>
                 </div>
-                <form action="logout.php" method="post" class="inline">
+                <form action="logout.php" method="post">
                     <?= csrf_campo() ?>
                     <button type="submit" class="btn btn--peligro btn--sm" title="Cerrar sesion de forma segura">Salir</button>
                 </form>
