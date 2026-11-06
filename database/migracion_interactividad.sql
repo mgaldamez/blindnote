@@ -5,8 +5,10 @@
 -- es solo para una base que ya existia antes de la feature.
 --
 -- Se puede ejecutar sobre una base con datos y repetir sin error: cada
--- columna se agrega unicamente si todavia no existe. Las filas existentes
--- quedan con avatar NULL (silueta por defecto) y fijada = 0.
+-- columna se agrega unicamente si todavia no existe. Si las columnas ya estan
+-- (por ejemplo porque se agregaron a mano), este archivo no hace nada: no es
+-- necesario correrlo, y correrlo tampoco rompe nada.
+-- Las filas existentes quedan con avatar NULL (silueta por defecto) y fijada = 0.
 --
 -- Uso (la base se pasa al comando, no va escrita aca, porque el nombre es
 -- configurable con DB_NOMBRE):
