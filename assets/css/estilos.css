@@ -447,3 +447,759 @@ code {
 
 .nota--completada { background: var(--panel-suave); }
 .nota--completada strong { text-decoration: line-through; color: var(--texto-suave); }
+
+
+/* =====================================================================
+   BLINDNOTE 2.0 - CARACTERISTICAS INTERACTIVAS Y MODO OSCURO
+   ===================================================================== */
+
+/* ------------------------- Modo Oscuro (Dark Mode) ------------------------- */
+[data-theme="dark"] {
+    --fondo:        #0b0f17;
+    --panel:        #151c28;
+    --panel-suave:  #1d2636;
+    --borde:        #263345;
+    --borde-fuerte: #38495f;
+    --texto:        #cbd5e1;
+    --texto-fuerte: #f8fafc;
+    --texto-suave:  #94a3b8;
+    --primario:     #2563eb;
+    --acento:       #60a5fa;
+    --ok:           #22c55e;
+    --error:        #ef4444;
+    --aviso:        #f59e0b;
+    --sombra:       0 4px 12px rgba(0, 0, 0, .35);
+}
+
+[data-theme="dark"] body {
+    background: var(--fondo);
+    color: var(--texto);
+}
+
+[data-theme="dark"] .topbar {
+    background: #111722;
+    border-color: var(--borde);
+}
+
+[data-theme="dark"] .sidebar {
+    background: #111722;
+    border-color: var(--borde);
+}
+
+[data-theme="dark"] .campo input,
+[data-theme="dark"] .campo textarea,
+[data-theme="dark"] .campo select,
+[data-theme="dark"] .filtros select {
+    background-color: #1a2232;
+    color: var(--texto-fuerte);
+    border-color: var(--borde-fuerte);
+}
+
+[data-theme="dark"] .campo input:focus,
+[data-theme="dark"] .campo textarea:focus {
+    border-color: var(--acento);
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, .2);
+}
+
+[data-theme="dark"] .btn--primario {
+    background: var(--primario);
+    color: #ffffff;
+}
+[data-theme="dark"] .btn--primario:hover {
+    background: #1d4ed8;
+}
+
+[data-theme="dark"] .btn--peligro {
+    background: transparent;
+    color: #f87171;
+    border-color: #7f1d1d;
+}
+[data-theme="dark"] .btn--peligro:hover {
+    background: #450a0a;
+}
+
+[data-theme="dark"] .alerta--ok {
+    background: #064e3b;
+    border-color: #047857;
+    color: #a7f3d0;
+}
+[data-theme="dark"] .alerta--error {
+    background: #450a0a;
+    border-color: #7f1d1d;
+    color: #fecaca;
+}
+[data-theme="dark"] .alerta--info {
+    background: #172554;
+    border-color: #1e40af;
+    color: #bfdbfe;
+}
+
+[data-theme="dark"] .tabla th {
+    background: var(--panel-suave);
+    color: var(--texto-suave);
+    border-color: var(--borde);
+}
+
+[data-theme="dark"] .tabla tbody tr:hover td {
+    background: var(--panel-suave);
+}
+
+[data-theme="dark"] .nota--completada {
+    background: #161f2e;
+}
+
+[data-theme="dark"] .pestana--activa {
+    background: var(--panel);
+    border-color: var(--borde);
+    color: var(--texto-fuerte);
+}
+
+[data-theme="dark"] code {
+    background: #1a2232;
+    border-color: var(--borde);
+    color: #93c5fd;
+}
+
+/* ------------------------- Boton Toggle Tema (Sol / Luna) ------------------------- */
+.topbar__acciones {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+}
+
+.tema-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1px solid var(--borde);
+    background: var(--panel-suave);
+    color: var(--texto-fuerte);
+    cursor: pointer;
+    transition: transform .2s ease, background .15s ease, border-color .15s ease;
+}
+.tema-toggle:hover {
+    background: var(--borde);
+    transform: scale(1.05);
+}
+.tema-toggle__icono--luna { display: none; }
+.tema-toggle__icono--sol { display: block; }
+
+[data-theme="dark"] .tema-toggle__icono--sol { display: none; }
+[data-theme="dark"] .tema-toggle__icono--luna { display: block; color: #fbbf24; }
+
+/* ------------------------- Topbar & Sidebar Usuario con Avatar ------------------------- */
+.topbar__perfil {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .25rem .6rem .25rem .3rem;
+    border-radius: 20px;
+    background: var(--panel-suave);
+    border: 1px solid var(--borde);
+    color: var(--texto-fuerte);
+    text-decoration: none;
+    transition: background .15s ease;
+}
+.topbar__perfil:hover {
+    background: var(--borde);
+    text-decoration: none;
+}
+.topbar__avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sidebar__usuario-card {
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+    margin-bottom: .6rem;
+}
+.sidebar__usuario-meta {
+    display: flex;
+    flex-direction: column;
+}
+.sidebar__usuario-nombre {
+    font-weight: 600;
+    font-size: .88rem;
+    color: var(--texto-fuerte);
+    line-height: 1.2;
+}
+.sidebar__usuario-rol {
+    margin-top: .15rem;
+    width: fit-content;
+}
+
+/* ------------------------- Banner Sugerencia de Avatar ------------------------- */
+.avatar-banner-sugerencia {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: .9rem 1.25rem;
+    background: linear-gradient(135deg, rgba(37, 99, 235, .08), rgba(124, 58, 237, .08));
+    border: 1px solid rgba(37, 99, 235, .25);
+    border-radius: var(--radio);
+    margin-bottom: 1.5rem;
+    animation: aparecerBanner .3s ease-out;
+}
+@keyframes aparecerBanner {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.avatar-banner-sugerencia__icono {
+    flex-shrink: 0;
+}
+.avatar-banner-sugerencia__texto strong {
+    display: block;
+    color: var(--texto-fuerte);
+    font-size: .95rem;
+}
+.avatar-banner-sugerencia__texto p {
+    margin: .15rem 0 0;
+    color: var(--texto-suave);
+    font-size: .85rem;
+}
+.avatar-banner-sugerencia__botones {
+    display: flex;
+    gap: .5rem;
+    flex-shrink: 0;
+}
+
+/* ------------------------- Perfil Resumen en Dashboard ------------------------- */
+.perfil-resumen {
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+}
+.perfil-resumen__avatar {
+    position: relative;
+    flex-shrink: 0;
+}
+.perfil-resumen__avatar-btn {
+    position: absolute;
+    bottom: -2px;
+    right: -2px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--primario);
+    color: #fff;
+    display: grid;
+    place-items: center;
+    font-size: .75rem;
+    border: 2px solid var(--panel);
+    text-decoration: none;
+    box-shadow: var(--sombra);
+}
+.perfil-resumen__avatar-btn:hover {
+    text-decoration: none;
+    transform: scale(1.1);
+}
+.perfil-resumen__datos h1 {
+    margin: 0;
+    font-size: 1.5rem;
+}
+.perfil-resumen__datos p {
+    margin: .25rem 0 0;
+    color: var(--texto-suave);
+}
+
+/* ------------------------- Galeria de Seleccion de Avatares ------------------------- */
+.avatar-actual-banner {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    padding: 1.2rem;
+    background: var(--panel-suave);
+    border-radius: var(--radio);
+    border: 1px solid var(--borde);
+    margin-bottom: 1.5rem;
+}
+.avatar-actual-banner__info h2 {
+    margin: 0 0 .25rem;
+    font-size: 1.15rem;
+}
+.avatar-actual-banner__info p {
+    margin: 0;
+    color: var(--texto-suave);
+    font-size: .9rem;
+}
+
+.avatar-galeria {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: 1.2rem;
+}
+.avatar-tarjeta {
+    background: var(--panel);
+    border: 2px solid var(--borde);
+    border-radius: var(--radio);
+    padding: 1.2rem 1rem;
+    text-align: center;
+    transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.avatar-tarjeta:hover {
+    border-color: var(--acento);
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, .08);
+}
+.avatar-tarjeta--activo {
+    border-color: #16a34a !important;
+    background: rgba(22, 163, 74, .04);
+}
+.avatar-tarjeta__preview {
+    margin-bottom: .8rem;
+}
+.avatar-tarjeta__nombre {
+    margin: 0 0 .3rem;
+    font-size: 1rem;
+    color: var(--texto-fuerte);
+}
+.avatar-tarjeta__desc {
+    font-size: .8rem;
+    color: var(--texto-suave);
+    margin: 0 0 1rem;
+    flex: 1;
+}
+
+/* ------------------------- Medidor Interactivo de Fuerza de Clave ------------------------- */
+.medidor-fuerza {
+    margin-top: .6rem;
+    padding: .85rem;
+    background: var(--panel-suave);
+    border-radius: var(--radio-sm);
+    border: 1px solid var(--borde);
+}
+.medidor-fuerza__barra {
+    height: 8px;
+    width: 100%;
+    background: var(--borde);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: .5rem;
+}
+.medidor-fuerza__progreso {
+    height: 100%;
+    width: 0%;
+    transition: width .25s ease, background-color .25s ease;
+    border-radius: 4px;
+}
+.medidor-fuerza__info {
+    display: flex;
+    justify-content: space-between;
+    font-size: .82rem;
+    margin-bottom: .6rem;
+    color: var(--texto-suave);
+}
+.medidor-fuerza__info strong {
+    color: var(--texto-fuerte);
+}
+.medidor-fuerza__requisitos {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    font-size: .8rem;
+    color: var(--texto-suave);
+}
+.medidor-fuerza__requisitos li {
+    padding: .2rem 0;
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+    transition: color .15s ease;
+}
+.medidor-fuerza__requisitos .req-icono {
+    font-weight: bold;
+    display: inline-block;
+    width: 14px;
+    text-align: center;
+    color: #ef4444;
+}
+.medidor-fuerza__requisitos .req--ok {
+    color: #16a34a;
+    font-weight: 600;
+}
+.medidor-fuerza__requisitos .req--ok .req-icono {
+    color: #16a34a;
+}
+
+/* ------------------------- Sistema de Notificaciones Toast ------------------------- */
+.toast-contenedor {
+    position: fixed;
+    top: 1.25rem;
+    right: 1.25rem;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: .6rem;
+    pointer-events: none;
+}
+.toast {
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+    padding: .75rem 1.1rem;
+    border-radius: var(--radio);
+    background: #111827;
+    color: #f9fafb;
+    font-size: .88rem;
+    font-weight: 600;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, .25);
+    opacity: 0;
+    transform: translateX(30px);
+    transition: opacity .25s ease, transform .25s ease;
+    border-left: 4px solid var(--primario);
+    pointer-events: auto;
+}
+.toast--visible {
+    opacity: 1;
+    transform: translateX(0);
+}
+.toast--ok { border-left-color: #16a34a; }
+.toast--error { border-left-color: #ef4444; }
+.toast--info { border-left-color: #3b82f6; }
+.toast__icono { font-size: 1rem; }
+
+/* ------------------------- Boton Copiar y Animaciones ------------------------- */
+.btn-copiar {
+    display: inline-flex;
+    align-items: center;
+    gap: .3rem;
+    cursor: pointer;
+}
+.btn-copiado-exito {
+    background: #16a34a !important;
+    color: #fff !important;
+    border-color: #16a34a !important;
+}
+
+/* ------------------------- Fijado de Notas (Pin to Top) ------------------------- */
+.btn-icono {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: .2rem .35rem;
+    border-radius: 4px;
+    font-size: .95rem;
+    color: var(--texto-suave);
+    transition: background .12s ease, transform .12s ease, color .12s ease;
+}
+.btn-icono:hover {
+    background: var(--panel-suave);
+    color: var(--texto-fuerte);
+    transform: scale(1.1);
+}
+.btn-fijar--activa {
+    color: #d97706 !important;
+    background: rgba(217, 119, 6, .12) !important;
+}
+.badge--fijada {
+    background: #fef3c7;
+    color: #92400e;
+    font-weight: 700;
+}
+[data-theme="dark"] .badge--fijada {
+    background: #451a03;
+    color: #fde68a;
+}
+.nota--fijada {
+    border-left: 4px solid #d97706 !important;
+}
+.nota__titulo-wrap {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    margin-bottom: .2rem;
+}
+
+/* ------------------------- Tablero Kanban Interactivo ------------------------- */
+.encabezado-seccion--flex {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+.vista-selector {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+}
+
+.kanban-instrucciones {
+    background: var(--panel-suave);
+    border: 1px dashed var(--borde-fuerte);
+    border-radius: var(--radio-sm);
+    padding: .6rem 1rem;
+    margin-bottom: 1.25rem;
+    font-size: .86rem;
+    color: var(--texto-suave);
+}
+
+.kanban-tablero {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.5rem;
+    align-items: start;
+}
+
+.kanban-columna {
+    background: var(--panel-suave);
+    border: 1px solid var(--borde);
+    border-radius: var(--radio);
+    overflow: hidden;
+    transition: border-color .15s ease, background .15s ease;
+}
+.kanban-columna--hover {
+    border-color: var(--acento);
+    background: rgba(37, 99, 235, .05);
+}
+
+.kanban-columna__cabecera {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: .85rem 1.1rem;
+    border-bottom: 1px solid var(--borde);
+    background: var(--panel);
+}
+.kanban-columna__cabecera h3 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+}
+.kanban-columna__cabecera--pendientes h3 { color: #2563eb; }
+.kanban-columna__cabecera--completadas h3 { color: #16a34a; }
+
+.kanban-columna__zona {
+    padding: 1rem;
+    min-height: 250px;
+    display: flex;
+    flex-direction: column;
+    gap: .85rem;
+}
+
+.kanban-vacio {
+    text-align: center;
+    color: var(--texto-suave);
+    font-style: italic;
+    font-size: .88rem;
+    padding: 2.5rem 1rem;
+    border: 2px dashed var(--borde);
+    border-radius: var(--radio-sm);
+}
+
+.kanban-tarjeta {
+    background: var(--panel);
+    border: 1px solid var(--borde);
+    border-radius: var(--radio-sm);
+    padding: .9rem 1rem;
+    cursor: grab;
+    transition: transform .15s ease, box-shadow .15s ease, opacity .15s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .05);
+}
+.kanban-tarjeta:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, .08);
+}
+.kanban-tarjeta:active {
+    cursor: grabbing;
+}
+.kanban-tarjeta--arrastrando {
+    opacity: .4;
+    transform: scale(.98);
+}
+.kanban-tarjeta--fijada {
+    border-left: 4px solid #d97706;
+}
+.kanban-tarjeta--completada {
+    opacity: .85;
+    background: rgba(22, 163, 74, .04);
+}
+.kanban-tarjeta--completada .kanban-tarjeta__titulo {
+    text-decoration: line-through;
+    color: var(--texto-suave);
+}
+
+.kanban-tarjeta__top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: .4rem;
+}
+.kanban-tarjeta__herramientas {
+    display: flex;
+    gap: .25rem;
+    margin-left: auto;
+}
+.kanban-tarjeta__titulo {
+    margin: 0 0 .35rem;
+    font-size: .95rem;
+    color: var(--texto-fuerte);
+    line-height: 1.3;
+}
+.kanban-tarjeta__cuerpo {
+    margin: 0 0 .75rem;
+    font-size: .86rem;
+    color: var(--texto);
+    white-space: pre-wrap;
+    word-break: break-word;
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.kanban-tarjeta__pie {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: .76rem;
+    color: var(--texto-suave);
+    border-top: 1px solid var(--borde);
+    padding-top: .5rem;
+    margin-top: .3rem;
+}
+.kanban-tarjeta__acciones {
+    display: flex;
+    gap: .25rem;
+}
+
+/* ------------------------- Widgets de Graficas Interactivas ------------------------- */
+.grid--4 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+}
+.stat--pendientes { border-top: 3px solid #2563eb; }
+.stat--completadas { border-top: 3px solid #16a34a; }
+.stat--fijadas { border-top: 3px solid #d97706; }
+
+.widget-grafica h2 {
+    margin: 0 0 .2rem;
+    font-size: 1.1rem;
+}
+.widget-grafica__sub {
+    margin: 0 0 1.2rem;
+    color: var(--texto-suave);
+    font-size: .85rem;
+}
+
+.donut-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    padding: .5rem 0;
+}
+.donut-svg {
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .06));
+}
+.donut-segment {
+    transition: stroke-width .2s ease, filter .2s ease;
+    cursor: pointer;
+}
+.donut-segment:hover {
+    stroke-width: 17;
+    filter: brightness(1.1);
+}
+.donut-leyenda {
+    display: flex;
+    flex-direction: column;
+    gap: .65rem;
+}
+.leyenda-item {
+    display: flex;
+    align-items: center;
+    gap: .55rem;
+    font-size: .88rem;
+    color: var(--texto);
+}
+.leyenda-color {
+    width: 14px;
+    height: 14px;
+    border-radius: 4px;
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+.barras-metricas {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+.barra-metrica__cabecera {
+    display: flex;
+    justify-content: space-between;
+    font-size: .86rem;
+    margin-bottom: .3rem;
+    color: var(--texto-fuerte);
+}
+.barra-metrica__pista {
+    width: 100%;
+    height: 10px;
+    background: var(--borde);
+    border-radius: 5px;
+    overflow: hidden;
+}
+.barra-metrica__progreso {
+    height: 100%;
+    border-radius: 5px;
+    transition: width .5s ease-out;
+}
+.barra-metrica-info {
+    margin-top: .4rem;
+    color: var(--texto-suave);
+    font-size: .84rem;
+    border-top: 1px solid var(--borde);
+    padding-top: .6rem;
+}
+
+.enlace-tarjeta--accion {
+    text-align: center;
+    padding: 1.5rem 1rem;
+    transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+}
+.enlace-tarjeta--accion:hover {
+    transform: translateY(-3px);
+    border-color: var(--acento);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, .08);
+    text-decoration: none;
+}
+.enlace-tarjeta__icono {
+    font-size: 2rem;
+    margin-bottom: .5rem;
+}
+.enlace-tarjeta--accion h3 {
+    margin: 0 0 .25rem;
+    color: var(--texto-fuerte);
+}
+.enlace-tarjeta--accion p {
+    margin: 0;
+    font-size: .85rem;
+    color: var(--texto-suave);
+}
+
+.btn--ok-suave {
+    background: rgba(22, 163, 74, .1);
+    color: #16a34a;
+    border-color: rgba(22, 163, 74, .3);
+}
+.btn--ok-suave:hover {
+    background: #16a34a;
+    color: #fff;
+}
+
+/* Asegurar que el menu lateral siempre este desplegado cuando el usuario esta autenticado */
+.nav-toggle { display: none !important; }
+.layout:not(.layout--simple) { grid-template-columns: 15.5rem minmax(0, 1fr) !important; }
+.layout--simple { grid-template-columns: minmax(0, 1fr) !important; display: block !important; }
+body.nav-colapsado .layout:not(.layout--simple) { grid-template-columns: 15.5rem minmax(0, 1fr) !important; }

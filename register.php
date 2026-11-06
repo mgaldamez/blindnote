@@ -102,6 +102,23 @@ require __DIR__ . '/includes/header.php';
                 <label for="password">Contrasena</label>
                 <input type="password" id="password" name="password" minlength="<?= PASS_MIN_LEN ?>" maxlength="128" required>
                 <small class="ayuda">Minimo <?= PASS_MIN_LEN ?> caracteres, con mayuscula, minuscula y numero.</small>
+            
+            <div class="medidor-fuerza" data-medidor-fuerza>
+                <div class="medidor-fuerza__barra">
+                    <div class="medidor-fuerza__progreso" data-barra-progreso></div>
+                </div>
+                <div class="medidor-fuerza__info">
+                    <span>Fuerza de contrasena: <strong data-texto-fuerza>Sin ingresar</strong></span>
+                    <span class="medidor-fuerza__pct" data-pct-fuerza>0%</span>
+                </div>
+                <ul class="medidor-fuerza__requisitos">
+                    <li data-req="longitud"><span class="req-icono">&#10005;</span> Minimo 8 caracteres (12+ recomendado)</li>
+                    <li data-req="mayus"><span class="req-icono">&#10005;</span> Letra mayuscula (A-Z)</li>
+                    <li data-req="minus"><span class="req-icono">&#10005;</span> Letra minuscula (a-z)</li>
+                    <li data-req="numero"><span class="req-icono">&#10005;</span> Numero (0-9)</li>
+                    <li data-req="especial"><span class="req-icono">&#10005;</span> Caracter especial (!@#$%*...)</li>
+                </ul>
+            </div>
             </div>
             <div class="campo">
                 <label for="password2">Repetir contrasena</label>
