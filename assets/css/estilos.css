@@ -75,11 +75,18 @@ h2 { font-size: 1.05rem; margin-top: 0; letter-spacing: -.01em; }
     text-decoration: none;
 }
 .btn:hover { text-decoration: none; }
+/* Un <button> sin variante hereda el fondo claro del navegador (buttonface), que
+   no sigue el tema: en modo oscuro quedaba una pildora blanca. Los enlaces no
+   se tocan. Especificidad 0 en :where para que cualquier .btn--* lo pise. */
+.btn:where(button) { background-color: transparent; color: inherit; -webkit-appearance: none; }
 .btn--primario { background: var(--primario); color: #fff; }
 .btn--primario:hover { background: #2e3036; }
 .btn--primario:focus-visible { outline: 2px solid var(--acento); outline-offset: 2px; }
 .btn--peligro { background: #fff; color: var(--error); border-color: var(--borde-fuerte); }
 .btn--peligro:hover { background: #fef2f2; border-color: #fca5a5; }
+/* Estado "ya elegido" (por ejemplo el avatar activo). */
+.btn--ok { background: rgba(22, 163, 74, .12); color: var(--ok); border-color: rgba(22, 163, 74, .45); }
+.btn--ok:hover { background: rgba(22, 163, 74, .2); }
 .btn--sm { padding: .32rem .7rem; font-size: .82rem; }
 .btn--block { display: block; width: 100%; text-align: center; margin-top: .5rem; }
 
@@ -363,6 +370,8 @@ code {
     display: flex; flex-direction: column; gap: .5rem;
     padding-top: .8rem; border-top: 1px solid var(--borde);
 }
+.sidebar__pie form { display: block; margin: 0; }
+.sidebar__pie .btn { width: 100%; }
 .sidebar__usuario { font-size: .85rem; font-weight: 600; color: var(--texto-suave); }
 .sidebar__usuario em { font-style: normal; font-weight: 400; opacity: .75; }
 
@@ -376,8 +385,9 @@ code {
 .nav-toggle {
     display: inline-flex; align-items: center; gap: .4rem;
     padding: .42rem .6rem;
+    margin-right: auto;   /* queda pegado a la marca, no centrado en la barra */
     border: 1px solid var(--borde-fuerte); border-radius: var(--radio-sm);
-    background: #fff; color: var(--texto-fuerte);
+    background: var(--panel); color: var(--texto-fuerte);
     font: inherit; font-size: .85rem; font-weight: 600; cursor: pointer;
     transition: background .12s ease;
 }
@@ -516,6 +526,60 @@ code {
 }
 [data-theme="dark"] .btn--peligro:hover {
     background: #450a0a;
+}
+
+[data-theme="dark"] .nav-toggle {
+    background: var(--panel-suave);
+    color: var(--texto-fuerte);
+    border-color: var(--borde-fuerte);
+}
+[data-theme="dark"] .nav-toggle:hover {
+    background: var(--borde-fuerte);
+}
+
+[data-theme="dark"] .badge--admin,
+[data-theme="dark"] .badge--usuario {
+    background: var(--panel-suave);
+    color: var(--texto-suave);
+    border: 1px solid var(--borde);
+}
+[data-theme="dark"] .badge--ok {
+    background: var(--panel-suave);
+    color: var(--ok);
+}
+
+[data-theme="dark"] .sev--critica { background: #450a0a; color: #fecaca; }
+[data-theme="dark"] .sev--alta    { background: #5b2110; color: #fdba74; }
+[data-theme="dark"] .sev--media   { background: #453408; color: #fde047; }
+[data-theme="dark"] .sev--baja    { background: #1e3a5f; color: #bfdbfe; }
+
+[data-theme="dark"] .avatar-tarjeta--activo {
+    background: transparent;
+    border-color: var(--ok) !important;
+}
+
+[data-theme="dark"] .btn-fijar--activa {
+    color: var(--aviso) !important;
+    background: rgba(245, 158, 11, .2) !important;
+}
+
+[data-theme="dark"] .btn--ok-suave {
+    background: rgba(34, 197, 94, .15);
+    color: var(--ok);
+    border-color: var(--ok);
+}
+
+[data-theme="dark"] .kanban-tarjeta--completada {
+    background: rgba(34, 197, 94, .12);
+}
+
+[data-theme="dark"] .kanban-columna--hover {
+    background: rgba(37, 99, 235, .15);
+}
+
+[data-theme="dark"] .avatar-banner-sugerencia {
+    background: var(--panel-suave);
+    border: 1px solid var(--borde-fuerte);
 }
 
 [data-theme="dark"] .alerta--ok {
