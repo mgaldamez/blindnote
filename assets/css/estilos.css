@@ -389,7 +389,7 @@ code {
     body.nav-colapsado .layout { grid-template-columns: 4.6rem minmax(0, 1fr); }
     body.nav-colapsado .nav-enlace__texto,
     body.nav-colapsado .nav-seccion__titulo,
-    body.nav-colapsado .sidebar__usuario { display: none; }
+    body.nav-colapsado .sidebar__usuario-meta { display: none; }
     body.nav-colapsado .nav-enlace { justify-content: center; padding: .55rem .3rem; }
     body.nav-colapsado .sidebar__interior { padding-inline: .45rem; }
     body.nav-colapsado .sidebar__pie { align-items: stretch; }
@@ -1198,8 +1198,3 @@ code {
     color: #fff;
 }
 
-/* Asegurar que el menu lateral siempre este desplegado cuando el usuario esta autenticado */
-.nav-toggle { display: none !important; }
-.layout:not(.layout--simple) { grid-template-columns: 15.5rem minmax(0, 1fr) !important; }
-.layout--simple { grid-template-columns: minmax(0, 1fr) !important; display: block !important; }
-body.nav-colapsado .layout:not(.layout--simple) { grid-template-columns: 15.5rem minmax(0, 1fr) !important; }

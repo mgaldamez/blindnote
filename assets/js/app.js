@@ -25,10 +25,14 @@
         return chico.matches;
     }
 
+    // Recuerda la eleccion hecha en escritorio.
     try {
-        window.localStorage.removeItem(CLAVE_NAV);
-        cuerpo.classList.remove('nav-colapsado');
-    } catch (e) {}
+        if (window.localStorage.getItem(CLAVE_NAV) === '1') {
+            cuerpo.classList.add('nav-colapsado');
+        }
+    } catch (e) {
+        // Modo privado o almacenamiento bloqueado: se ignora la preferencia.
+    }
 
     function sincronizarAria() {
         if (!botonNav) return;
