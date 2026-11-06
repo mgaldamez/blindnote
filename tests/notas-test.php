@@ -7,6 +7,10 @@
  *  S5. Cada lista trae solo su estado, con las completadas ordenadas por fecha.
  *  S7. Toda operacion se limita al dueno de la nota (anti-IDOR).
  *
+ *  Fijado (pin): se alterna con fijar_nota, una nota fijada encabeza la lista
+ *  aunque sea mas vieja, y fijar al crear o editar afecta solo a la nota
+ *  guardada y nunca a una nota ajena.
+ *
  * Uso:
  *     docker compose exec web php tests/notas-test.php
  */
@@ -162,6 +166,58 @@ comprobar('las listas no mezclan usuarios', 0, count(listar_notas($beto, false))
 $contadores = contar_notas_por_estado($ana);
 comprobar('el contador marca 1 pendiente', 1, $contadores['pendientes']);
 comprobar('el contador marca 1 completada', 1, $contadores['completadas']);
+
+/* ---------------- Fijar (pin) notas ---------------- */
+
+$r = crear_nota($ana, 'Nota fija', 'contenido fijo');
+$notaFija = $r['id'];
+
+comprobar('una nota nueva no nace fijada', 0, (int) (obtener_nota($ana, $notaFija)['fijada'] ?? 0));
+
+$r = fijar_nota($ana, $notaFija);
+comprobar('el dueno fija su nota', 1, ($r['ok'] && $r['fijada']) ? 1 : 0);
+comprobar('y el pin queda guardado', 1, (int) (obtener_nota($ana, $notaFija)['fijada'] ?? 0));
+
+$r = fijar_nota($ana, $notaFija);
+comprobar('volver a fijar la desfija', 0, ($r['ok'] && $r['fijada']) ? 1 : 0);
+
+$fijadasAntes = contar_notas_por_estado($ana)['fijadas'];
+
+$r = fijar_nota($beto, $notaFija);
+comprobar('no se puede fijar una nota ajena', 1, $r['ok'] ? 0 : 1);
+comprobar('la nota ajena sigue sin fijar', 0, (int) (obtener_nota($ana, $notaFija)['fijada'] ?? 0));
+comprobar('el contador de fijadas no se movio', $fijadasAntes, contar_notas_por_estado($ana)['fijadas']);
+
+$r = establecer_fijada($ana, $notaFija, true);
+comprobar('establecer_fijada fija la nota', 1, ($r['ok'] && $r['fijada']) ? 1 : 0);
+
+$r = crear_nota($ana, 'Nota mas nueva sin fijar', 'contenido nuevo');
+comprobar('una nota fijada encabeza la lista aunque sea mas vieja', $notaFija, (int) listar_notas($ana, false)[0]['id']);
+
+$r = establecer_fijada($ana, $notaFija, false);
+comprobar('establecer_fijada desfija la nota', 0, ($r['ok'] && $r['fijada']) ? 1 : 0);
+
+/* ---- Fijar al guardar desde el formulario (crear / editar) ---- */
+
+$fijadasAntes = contar_notas_por_estado($ana)['fijadas'];
+
+$r = guardar_nota_form($ana, null, 'Creada fijada', 'cuerpo creado', true);
+comprobar('crear una nota fijada devuelve ok', 1, $r['ok'] ? 1 : 0);
+$creadaFijada = (int) $r['id'];
+
+comprobar('la nota recien creada queda fijada', 1, (int) (obtener_nota($ana, $creadaFijada)['fijada'] ?? 0));
+comprobar('crear fijada suma exactamente una fijada', $fijadasAntes + 1, contar_notas_por_estado($ana)['fijadas']);
+
+$r = guardar_nota_form($ana, $creadaFijada, 'Creada fijada', 'cuerpo editado', false);
+comprobar('editar sin fijar desfija la misma nota', 0, (int) (obtener_nota($ana, $creadaFijada)['fijada'] ?? 0));
+comprobar('editar sin fijar no toca otras notas', $fijadasAntes, contar_notas_por_estado($ana)['fijadas']);
+
+$r = guardar_nota_form($beto, $notaFija, 'Intento ajeno', 'x', true);
+comprobar('no se guarda sobre una nota ajena', 1, $r['ok'] ? 0 : 1);
+
+$r = guardar_nota_form($ana, null, '', 'sin titulo', true);
+comprobar('un titulo vacio no crea ni fija nada', 1, $r['ok'] ? 0 : 1);
+comprobar('y el contador de fijadas sigue igual', $fijadasAntes, contar_notas_por_estado($ana)['fijadas']);
 
 limpiar_notas();
 echo $fallos === 0 ? "TODO OK\n" : "$fallos caso(s) con falla\n";

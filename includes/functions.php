@@ -844,17 +844,79 @@ function fijar_nota(int $usuarioId, int $notaId): array
         return ['ok' => false, 'fijada' => false, 'errores' => ['La nota no existe.']];
     }
 
-    $nuevaFijada = empty($nota['fijada']) ? 1 : 0;
+    return establecer_fijada($usuarioId, $notaId, empty($nota['fijada']));
+}
+
+/**
+ * Deja la nota en el estado de fijada pedido, sin alternar.
+ *
+ * Solo actua sobre notas del usuario (anti-IDOR) y registra la auditoria.
+ *
+ * @return array{ok:bool, fijada:bool, errores:list<string>}
+ */
+function establecer_fijada(int $usuarioId, int $notaId, bool $fijada): array
+{
+    $nota = obtener_nota($usuarioId, $notaId);
+    if ($nota === null) {
+        return ['ok' => false, 'fijada' => false, 'errores' => ['La nota no existe.']];
+    }
+
+    $valor = $fijada ? 1 : 0;
+    if ((int) $nota['fijada'] === $valor) {
+        return ['ok' => true, 'fijada' => $fijada, 'errores' => []];
+    }
+
     db()->prepare('UPDATE notas SET fijada = :f WHERE id = :id AND usuario_id = :uid')
-        ->execute([':f' => $nuevaFijada, ':id' => $notaId, ':uid' => $usuarioId]);
+        ->execute([':f' => $valor, ':id' => $notaId, ':uid' => $usuarioId]);
 
     registrar_auditoria(
         $usuarioId,
-        $nuevaFijada ? 'NOTA_FIJADA' : 'NOTA_DESFIJADA',
+        $valor === 1 ? 'NOTA_FIJADA' : 'NOTA_DESFIJADA',
         'id=' . $notaId
     );
 
-    return ['ok' => true, 'fijada' => (bool) $nuevaFijada, 'errores' => []];
+    return ['ok' => true, 'fijada' => $fijada, 'errores' => []];
+}
+
+/**
+ * Guarda una nota desde el formulario (crear o editar) y aplica el pin.
+ *
+ * El controlador nunca calcula el id: crear_nota() lo devuelve y ademas
+ * escribe en logs_auditoria, asi que un db()->lastInsertId() posterior en la
+ * pagina apuntaria al ultimo log y fijaria la nota equivocada.
+ *
+ * @param int|null $notaId null para crear, id de la nota para editar.
+ * @return array{ok:bool, errores:list<string>, id:int}
+ */
+function guardar_nota_form(
+    int $usuarioId,
+    ?int $notaId,
+    string $titulo,
+    string $contenido,
+    bool $fijada
+): array {
+    if ($notaId === null) {
+        $resultado = crear_nota($usuarioId, $titulo, $contenido);
+        if (!$resultado['ok']) {
+            return ['ok' => false, 'errores' => $resultado['errores'], 'id' => 0];
+        }
+
+        $id = (int) $resultado['id'];
+        if ($fijada) {
+            establecer_fijada($usuarioId, $id, true);
+        }
+
+        return ['ok' => true, 'errores' => [], 'id' => $id];
+    }
+
+    $resultado = actualizar_nota($usuarioId, $notaId, $titulo, $contenido);
+    if (!$resultado['ok']) {
+        return ['ok' => false, 'errores' => $resultado['errores'], 'id' => $notaId];
+    }
+
+    establecer_fijada($usuarioId, $notaId, $fijada);
+
+    return ['ok' => true, 'errores' => [], 'id' => $notaId];
 }
 
 /**
