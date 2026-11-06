@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
     debe_cambiar_clave TINYINT(1)   NOT NULL DEFAULT 0,
     rol               ENUM('admin','usuario') NOT NULL DEFAULT 'usuario',
     activo            TINYINT(1)    NOT NULL DEFAULT 1,
+    avatar            VARCHAR(30)   NULL DEFAULT NULL,
     ultimo_login      DATETIME      NULL,
     creado_en         TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     actualizado_en    TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -84,6 +85,7 @@ CREATE TABLE IF NOT EXISTS notas (
     -- Completada: booleano + fecha (se limpia al reabrir).
     completada    TINYINT(1) NOT NULL DEFAULT 0,
     completada_en DATETIME   NULL,
+    fijada        TINYINT(1)   NOT NULL DEFAULT 0,
     creado_en  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     KEY idx_notas_usuario (usuario_id),

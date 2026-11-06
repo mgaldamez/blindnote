@@ -24,6 +24,7 @@ $iconos = [
         . '<path d="M9 11h6M9 15h6M9 19h3"/>',
     'proyecto' => '<path d="M12 3l7 3v5.5c0 4.4-3 7.6-7 9.5-4-1.9-7-5.1-7-9.5V6z"/>'
         . '<path d="M9.2 11.8l2 2 3.6-3.8"/>',
+    'avatar' => '<circle cx="12" cy="8" r="4"/><path d="M5 20c0-3.3 3.1-6 7-6s7 2.7 7 6"/>',
     'entrar' => '<path d="M10 4H5v16h5"/><path d="M15 8l4 4-4 4"/><path d="M19 12H9"/>',
     'registro' => '<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/>'
         . '<path d="M18 8v6M15 11h6"/>',
@@ -61,23 +62,33 @@ $cssVersion = @filemtime(__DIR__ . '/../assets/css/estilos.css') ?: 1;
             <span class="marca__logo">B</span>
             <span><?= e(APP_NOMBRE) ?></span>
         </a>
-        <?php if ($autenticado): ?>
-            <button class="nav-toggle" type="button" data-nav-toggle
-                    aria-controls="navegacion" aria-expanded="true" title="Mostrar u ocultar el menu">
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
-                     stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
-                    <path d="M4 7h16M4 12h16M4 17h16"/>
+
+
+        <div class="topbar__acciones">
+            <button class="tema-toggle" type="button" data-tema-toggle title="Cambiar tema claro/oscuro" aria-label="Cambiar tema">
+                <svg class="tema-toggle__icono tema-toggle__icono--sol" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="5"></circle>
+                    <line x1="12" y1="1" x2="12" y2="3"></line>
+                    <line x1="12" y1="21" x2="12" y2="23"></line>
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                    <line x1="1" y1="12" x2="3" y2="12"></line>
+                    <line x1="21" y1="12" x2="23" y2="12"></line>
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
                 </svg>
-                <span class="nav-toggle__texto">Menu</span>
+                <svg class="tema-toggle__icono tema-toggle__icono--luna" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                </svg>
             </button>
-        <?php endif; ?>
 
-
-        <?php if ($autenticado): ?>
-            <span class="topbar__usuario" title="<?= e($_SESSION['nombre'] ?? '') ?>">
-                <?= e($_SESSION['nombre'] ?? '') ?>
-            </span>
-        <?php endif; ?>
+            <?php if ($autenticado): ?>
+                <a class="topbar__perfil" href="avatar.php" title="Personalizar avatar de perfil">
+                    <span class="topbar__avatar"><?= obtener_avatar_svg($_SESSION['avatar'] ?? null, 28) ?></span>
+                    <span class="topbar__usuario"><?= e($_SESSION['nombre'] ?? '') ?></span>
+                </a>
+            <?php endif; ?>
+        </div>
     </div>
 </header>
 
@@ -91,6 +102,7 @@ $cssVersion = @filemtime(__DIR__ . '/../assets/css/estilos.css') ?: 1;
                     <?php
                     $enlaceNav('dashboard.php', 'Panel', 'panel');
                     $enlaceNav('notas.php', 'Notas', 'notas');
+                    $enlaceNav('avatar.php', 'Mi Avatar', 'avatar');
                     ?>
                 </div>
 
@@ -111,13 +123,18 @@ $cssVersion = @filemtime(__DIR__ . '/../assets/css/estilos.css') ?: 1;
             </nav>
 
             <div class="sidebar__pie">
-                <span class="sidebar__usuario">
-                    <?= e($_SESSION['nombre'] ?? '') ?>
-                    <em>(<?= e($_SESSION['rol'] ?? '') ?>)</em>
-                </span>
+                <div class="sidebar__usuario-card">
+                    <a href="avatar.php" class="sidebar__avatar-link" title="Cambiar mi avatar">
+                        <?= obtener_avatar_svg($_SESSION['avatar'] ?? null, 36) ?>
+                    </a>
+                    <div class="sidebar__usuario-meta">
+                        <span class="sidebar__usuario-nombre"><?= e($_SESSION['nombre'] ?? '') ?></span>
+                        <span class="sidebar__usuario-rol badge badge--<?= e($_SESSION['rol'] ?? 'usuario') ?>"><?= e($_SESSION['rol'] ?? '') ?></span>
+                    </div>
+                </div>
                 <form action="logout.php" method="post" class="inline">
                     <?= csrf_campo() ?>
-                    <button type="submit" class="btn btn--peligro btn--sm">Salir</button>
+                    <button type="submit" class="btn btn--peligro btn--sm" title="Cerrar sesion de forma segura">Salir</button>
                 </form>
             </div>
         </div>

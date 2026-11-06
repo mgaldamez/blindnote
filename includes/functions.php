@@ -215,7 +215,7 @@ function crear_nota(int $usuarioId, string $titulo, string $contenido): array
 function obtener_nota(int $usuarioId, int $notaId): ?array
 {
     $stmt = db()->prepare(
-        'SELECT id, titulo, contenido, completada, completada_en, creado_en
+        'SELECT id, titulo, contenido, completada, completada_en, fijada, creado_en
            FROM notas
           WHERE id = :id AND usuario_id = :uid'
     );
@@ -297,9 +297,9 @@ function cambiar_estado_nota(int $usuarioId, int $notaId, bool $completada): arr
  */
 function listar_notas(int $usuarioId, bool $completadas): array
 {
-    $orden = $completadas ? 'completada_en DESC, id DESC' : 'id DESC';
+    $orden = $completadas ? 'fijada DESC, completada_en DESC, id DESC' : 'fijada DESC, id DESC';
     $stmt = db()->prepare(
-        'SELECT id, titulo, contenido, completada, completada_en, creado_en
+        'SELECT id, titulo, contenido, completada, completada_en, fijada, creado_en
            FROM notas
           WHERE usuario_id = :uid AND completada = :completada
           ORDER BY ' . $orden
@@ -317,7 +317,9 @@ function listar_notas(int $usuarioId, bool $completadas): array
 function contar_notas_por_estado(int $usuarioId): array
 {
     $stmt = db()->prepare(
-        'SELECT SUM(completada = 0) AS pendientes, SUM(completada = 1) AS completadas
+        'SELECT SUM(completada = 0) AS pendientes,
+                SUM(completada = 1) AS completadas,
+                SUM(fijada = 1) AS fijadas
            FROM notas WHERE usuario_id = :uid'
     );
     $stmt->execute([':uid' => $usuarioId]);
@@ -326,6 +328,7 @@ function contar_notas_por_estado(int $usuarioId): array
     return [
         'pendientes'  => (int) ($fila['pendientes'] ?? 0),
         'completadas' => (int) ($fila['completadas'] ?? 0),
+        'fijadas'     => (int) ($fila['fijadas'] ?? 0),
     ];
 }
 
@@ -826,4 +829,138 @@ function intentos_fallidos_por_ip(string $ip): int
     $stmt->execute();
 
     return (int) ($stmt->fetch()['total'] ?? 0);
+}
+
+
+/**
+ * Alterna el estado fijada (pin) de una nota propia.
+ *
+ * @return array{ok:bool, fijada:bool, errores:list<string>}
+ */
+function fijar_nota(int $usuarioId, int $notaId): array
+{
+    $nota = obtener_nota($usuarioId, $notaId);
+    if ($nota === null) {
+        return ['ok' => false, 'fijada' => false, 'errores' => ['La nota no existe.']];
+    }
+
+    $nuevaFijada = empty($nota['fijada']) ? 1 : 0;
+    db()->prepare('UPDATE notas SET fijada = :f WHERE id = :id AND usuario_id = :uid')
+        ->execute([':f' => $nuevaFijada, ':id' => $notaId, ':uid' => $usuarioId]);
+
+    registrar_auditoria(
+        $usuarioId,
+        $nuevaFijada ? 'NOTA_FIJADA' : 'NOTA_DESFIJADA',
+        'id=' . $notaId
+    );
+
+    return ['ok' => true, 'fijada' => (bool) $nuevaFijada, 'errores' => []];
+}
+
+/**
+ * Catalogo de avatares interactivos con temas de ciberseguridad.
+ *
+ * @return array<string, array{id:string, nombre:string, desc:string, color:string, bg:string}>
+ */
+function avatares_disponibles(): array
+{
+    return [
+        'avatar-shield'    => ['id' => 'avatar-shield',    'nombre' => 'Escudo Protector',    'desc' => 'Defensa perimetral y cifrado', 'color' => '#2563eb', 'bg' => '#dbeafe'],
+        'avatar-ninja'     => ['id' => 'avatar-ninja',     'nombre' => 'Ninja de Seguridad',  'desc' => 'Sigilo, monitoreo e intrusion', 'color' => '#7c3aed', 'bg' => '#ede9fe'],
+        'avatar-hacker'    => ['id' => 'avatar-hacker',    'nombre' => 'Hacker Etico',        'desc' => 'Pentesting y analisis de fallas', 'color' => '#059669', 'bg' => '#d1fae5'],
+        'avatar-detective' => ['id' => 'avatar-detective', 'nombre' => 'Auditor Forense',     'desc' => 'Inspeccion de logs e investigacion', 'color' => '#d97706', 'bg' => '#fef3c7'],
+        'avatar-key'       => ['id' => 'avatar-key',       'nombre' => 'Guardian Cripto',     'desc' => 'Gestion segura de credenciales', 'color' => '#0891b2', 'bg' => '#cffafe'],
+        'avatar-robot'     => ['id' => 'avatar-robot',     'nombre' => 'Bot Centinela',       'desc' => 'Automatizacion y alertas tempranas', 'color' => '#475569', 'bg' => '#e2e8f0'],
+        'avatar-cat'       => ['id' => 'avatar-cat',       'nombre' => 'Gato Coder',          'desc' => 'Desarrollo seguro y testing', 'color' => '#db2777', 'bg' => '#fce7f3'],
+        'avatar-astro'     => ['id' => 'avatar-astro',     'nombre' => 'Explorador Cloud',    'desc' => 'Seguridad en la nube y DevOps', 'color' => '#4f46e5', 'bg' => '#e0e7ff'],
+    ];
+}
+
+/**
+ * Devuelve el SVG vectorial del avatar solicitado o uno neutro por defecto.
+ */
+function obtener_avatar_svg(?string $avatarId, int $size = 36, string $claseExtra = ''): string
+{
+    $avatares = avatares_disponibles();
+    $info = $avatares[$avatarId ?? ''] ?? null;
+
+    if ($info === null) {
+        // Avatar generico seguro (silueta de usuario con acento)
+        return '<svg class="avatar-svg ' . e($claseExtra) . '" width="' . $size . '" height="' . $size . '" viewBox="0 0 36 36" fill="none" aria-hidden="true">'
+            . '<circle cx="18" cy="18" r="18" fill="#e2e8f0"/>'
+            . '<circle cx="18" cy="13" r="5.5" fill="#64748b"/>'
+            . '<path d="M7 31c0-6 5-9.5 11-9.5s11 3.5 11 9.5" fill="#64748b"/>'
+            . '</svg>';
+    }
+
+    $bg = $info['bg'];
+    $color = $info['color'];
+
+    $iconos = [
+        'avatar-shield' => '<path d="M18 7l9 4v7c0 5.5-3.8 10.7-9 12-5.2-1.3-9-6.5-9-12V11l9-4z" fill="' . $color . '" opacity="0.2"/>'
+            . '<path d="M18 7l9 4v7c0 5.5-3.8 10.7-9 12-5.2-1.3-9-6.5-9-12V11l9-4z" stroke="' . $color . '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>'
+            . '<path d="M15 18l2 2 4-4" stroke="' . $color . '" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>',
+
+        'avatar-ninja' => '<circle cx="18" cy="18" r="11" fill="' . $color . '" opacity="0.2"/>'
+            . '<path d="M9 16c2-3 16-3 18 0" stroke="' . $color . '" stroke-width="2" stroke-linecap="round"/>'
+            . '<path d="M11 20h14" stroke="' . $color . '" stroke-width="2" stroke-linecap="round"/>'
+            . '<circle cx="14" cy="18" r="1.5" fill="' . $color . '"/>'
+            . '<circle cx="22" cy="18" r="1.5" fill="' . $color . '"/>'
+            . '<path d="M15 24c1.5 1 4.5 1 6 0" stroke="' . $color . '" stroke-width="1.8" stroke-linecap="round"/>',
+
+        'avatar-hacker' => '<rect x="8" y="10" width="20" height="16" rx="3" fill="' . $color . '" opacity="0.18"/>'
+            . '<rect x="8" y="10" width="20" height="16" rx="3" stroke="' . $color . '" stroke-width="2"/>'
+            . '<path d="M12 15l3 3-3 3M17 21h5" stroke="' . $color . '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>',
+
+        'avatar-detective' => '<circle cx="16" cy="16" r="6" stroke="' . $color . '" stroke-width="2.2" fill="' . $color . '" opacity="0.15"/>'
+            . '<path d="M20.5 20.5L27 27" stroke="' . $color . '" stroke-width="2.5" stroke-linecap="round"/>'
+            . '<circle cx="16" cy="16" r="2.5" fill="' . $color . '"/>',
+
+        'avatar-key' => '<circle cx="15" cy="16" r="5" stroke="' . $color . '" stroke-width="2" fill="' . $color . '" opacity="0.2"/>'
+            . '<path d="M19 18l7 7m-3-1l2 2m-1-4l2 2" stroke="' . $color . '" stroke-width="2" stroke-linecap="round"/>',
+
+        'avatar-robot' => '<rect x="10" y="12" width="16" height="14" rx="3" fill="' . $color . '" opacity="0.2"/>'
+            . '<rect x="10" y="12" width="16" height="14" rx="3" stroke="' . $color . '" stroke-width="2"/>'
+            . '<circle cx="14" cy="17" r="1.8" fill="' . $color . '"/>'
+            . '<circle cx="22" cy="17" r="1.8" fill="' . $color . '"/>'
+            . '<path d="M14 22h8M18 7v5M16 7h4" stroke="' . $color . '" stroke-width="1.8" stroke-linecap="round"/>',
+
+        'avatar-cat' => '<path d="M11 11l2 5h10l2-5-4 2h-6l-4-2z" fill="' . $color . '" opacity="0.25"/>'
+            . '<circle cx="18" cy="19" r="8" stroke="' . $color . '" stroke-width="2"/>'
+            . '<path d="M11 14l2-4 3 2M25 14l-2-4-3 2" stroke="' . $color . '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>'
+            . '<circle cx="15" cy="19" r="1.3" fill="' . $color . '"/>'
+            . '<circle cx="21" cy="19" r="1.3" fill="' . $color . '"/>'
+            . '<path d="M16 22l2 1.2 2-1.2" stroke="' . $color . '" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>',
+
+        'avatar-astro' => '<circle cx="18" cy="17" r="7.5" fill="' . $color . '" opacity="0.2"/>'
+            . '<circle cx="18" cy="17" r="7.5" stroke="' . $color . '" stroke-width="2"/>'
+            . '<path d="M13 17a5 3.5 0 0 1 10 0" fill="' . $color . '"/>'
+            . '<path d="M10 26c2-2.5 5-3.5 8-3.5s6 1 8 3.5" stroke="' . $color . '" stroke-width="2" stroke-linecap="round"/>',
+    ];
+
+    $inner = $iconos[$info['id']] ?? '';
+
+    return '<svg class="avatar-svg ' . e($claseExtra) . '" width="' . $size . '" height="' . $size . '" viewBox="0 0 36 36" fill="none" aria-label="' . e($info['nombre']) . '">'
+        . '<circle cx="18" cy="18" r="18" fill="' . $bg . '"/>'
+        . $inner
+        . '</svg>';
+}
+
+/**
+ * Guarda la seleccion de avatar para el usuario.
+ */
+function guardar_avatar(int $usuarioId, string $avatarId): bool
+{
+    $avatares = avatares_disponibles();
+    if (!isset($avatares[$avatarId])) {
+        return false;
+    }
+
+    $stmt = db()->prepare('UPDATE usuarios SET avatar = :av WHERE id = :id');
+    $stmt->execute([':av' => $avatarId, ':id' => $usuarioId]);
+
+    $_SESSION['avatar'] = $avatarId;
+    registrar_auditoria($usuarioId, 'AVATAR_ACTUALIZADO', 'avatar=' . $avatarId);
+
+    return true;
 }

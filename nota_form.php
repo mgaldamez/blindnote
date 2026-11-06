@@ -4,6 +4,7 @@
  *
  * Toda la validacion y el control de propiedad viven en includes/functions.php
  * (crear_nota / actualizar_nota), que filtran por el usuario de la sesion.
+ * Soporta fijar la nota y copiar al portapapeles.
  */
 require_once __DIR__ . '/includes/init.php';
 exigir_autenticacion();
@@ -13,7 +14,7 @@ $notaId    = (int) ($_GET['id'] ?? 0);
 $editando  = $notaId > 0;
 $errores   = [];
 
-$vals = ['titulo' => '', 'contenido' => ''];
+$vals = ['titulo' => '', 'contenido' => '', 'fijada' => 0];
 
 if ($editando) {
     $nota = obtener_nota($usuarioId, $notaId);
@@ -25,6 +26,7 @@ if ($editando) {
     $vals = [
         'titulo'    => (string) $nota['titulo'],
         'contenido' => (string) $nota['contenido'],
+        'fijada'    => (int) ($nota['fijada'] ?? 0),
     ];
 }
 
@@ -34,6 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $vals = [
         'titulo'    => post('titulo'),
         'contenido' => (string) ($_POST['contenido'] ?? ''),
+        'fijada'    => !empty($_POST['fijada']) ? 1 : 0,
     ];
 
     $resultado = $editando
@@ -41,6 +44,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         : crear_nota($usuarioId, $vals['titulo'], $vals['contenido']);
 
     if ($resultado['ok']) {
+        $idAfectada = $editando ? $notaId : (int) db()->lastInsertId();
+        if ($idAfectada > 0) {
+            db()->prepare('UPDATE notas SET fijada = :f WHERE id = :id AND usuario_id = :uid')
+                ->execute([':f' => $vals['fijada'], ':id' => $idAfectada, ':uid' => $usuarioId]);
+        }
         redirigir('notas.php?ok=' . ($editando ? 'editada' : 'creada'));
     }
 
@@ -52,7 +60,7 @@ require __DIR__ . '/includes/header.php';
 ?>
 <section class="encabezado-seccion">
     <h1><?= $editando ? 'Editar nota' : 'Nueva nota' ?></h1>
-    <p><?= $editando ? 'Modifica el titulo o el contenido.' : 'El contenido se guarda y se muestra escapado.' ?></p>
+    <p><?= $editando ? 'Modifica el titulo, contenido o el estado fijado.' : 'El contenido se guarda y se muestra escapado de forma segura.' ?></p>
 </section>
 
 <div class="tarjeta">
@@ -68,13 +76,29 @@ require __DIR__ . '/includes/header.php';
         <div class="campo">
             <label for="titulo">Titulo</label>
             <input type="text" id="titulo" name="titulo" maxlength="150"
-                   value="<?= e($vals['titulo']) ?>" required>
+                   value="<?= e($vals['titulo']) ?>" placeholder="Escribe el titulo de la nota" required>
         </div>
 
         <div class="campo">
-            <label for="contenido">Contenido</label>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: .3rem;">
+                <label for="contenido" style="margin-bottom: 0;">Contenido</label>
+                <?php if ($editando && !empty($vals['contenido'])): ?>
+                    <button type="button" class="btn btn--sm btn-copiar" data-copiar-nota="<?= e($vals['titulo'] . "
+
+" . $vals['contenido']) ?>" title="Copiar al portapapeles">
+                        &#128203; Copiar nota
+                    </button>
+                <?php endif; ?>
+            </div>
             <textarea id="contenido" name="contenido" rows="8" required
                       placeholder="Escribe aqui el contenido de tu nota"><?= e($vals['contenido']) ?></textarea>
+        </div>
+
+        <div class="campo campo--checkbox">
+            <label class="checkbox-custom">
+                <input type="checkbox" name="fijada" value="1" <?= !empty($vals['fijada']) ? 'checked' : '' ?>>
+                <span>&#128204; <strong>Fijar esta nota al inicio</strong> (aparecera destacada arriba en la lista y tablero)</span>
+            </label>
         </div>
 
         <div class="campo campo--acciones">

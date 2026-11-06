@@ -93,7 +93,7 @@ function autenticar(string $username, string $password): array
     //    la cuenta antes de contar: el control de fuerza bruta cuenta por
     //    cuenta, no por el texto tipeado, y usuario y correo son la misma.
     $stmt = db()->prepare(
-        'SELECT id, nombre, username, email, password_hash, rol, activo, debe_cambiar_clave
+        'SELECT id, nombre, username, email, password_hash, rol, activo, debe_cambiar_clave, avatar
            FROM usuarios
           WHERE username = :username
              OR email = :email
@@ -165,6 +165,7 @@ function autenticar(string $username, string $password): array
     $_SESSION['email']            = $usuario['email'];
     $_SESSION['rol']              = $usuario['rol'];
     $_SESSION['debe_cambiar_clave'] = ((int) $usuario['debe_cambiar_clave'] === 1);
+    $_SESSION['avatar']             = $usuario['avatar'] ?? null;
     $_SESSION['inicio_sesion']    = $ahora;
     $_SESSION['ultima_actividad'] = $ahora;
     $_SESSION['user_agent']       = $_SERVER['HTTP_USER_AGENT'] ?? '';
