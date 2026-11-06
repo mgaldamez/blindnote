@@ -145,6 +145,29 @@ define('DB_CLAVE', 'root');
 En producción se recomienda un usuario de base de datos dedicado con privilegios
 mínimos, no `root`.
 
+### Actualizar una base de datos existente
+
+`database/schema.sql` sólo se aplica a bases nuevas. Una base creada por una
+versión anterior necesita las migraciones de `database/` **antes** de abrir el
+sitio: las consultas nuevas piden columnas que antes no existían (por ejemplo
+`usuarios.avatar` y `notas.fijada`) y la aplicación falla al arrancar sin ellas,
+incluso en el login.
+
+```bash
+# una vez por cada migración nueva
+mysql -u root -p seguridad_web < database/migracion_interactividad.sql
+```
+
+Con Docker (la contraseña se pide por teclado):
+
+```bash
+docker compose exec -T db mysql -u root -p -D seguridad_web \
+    < database/migracion_interactividad.sql
+```
+
+Las migraciones son **idempotentes**: se pueden volver a ejecutar sin error y no
+tocan los datos existentes (`avatar` queda en `NULL` y `fijada` en `0`).
+
 ## 3. Primer usuario y acceso
 
 No se incluyen usuarios ni contraseñas por defecto. El **instalador `setup.php`
@@ -200,13 +223,15 @@ seguridad-web/
 │  ├─ header.php / footer.php
 ├─ assets/css/estilos.css
 ├─ database/schema.sql     Esquema de la base de datos
+├─ database/migracion_interactividad.sql
+│                          Columnas nuevas (avatar, fijada) para bases ya creadas
 ├─ docker-compose.yml      Stack desde la imagen publicada (GHCR)
 ├─ docker-compose.dev.yml  Override que construye desde el Dockerfile
 ├─ tests/
 │  ├─ fuerza-bruta-test.php  Regresión del bloqueo por cuenta e IP
 │  ├─ usuarios-crud-test.php Regresión del CRUD y de las guardas de admin
 │  ├─ auditoria-test.php     Regresión de la auditoría y del CSV
-│  └─ notas-test.php         Regresión de la edición y del completado
+│  └─ notas-test.php         Regresión de la edición, completado y fijado
 ├─ .github/workflows/ci.yml  Integración continua: build, checks y publicación
 ├─ deploy/nginx.conf.example  Proxy inverso de referencia (solo 443)
 └─ .htaccess               Cabeceras de seguridad y protección de carpetas

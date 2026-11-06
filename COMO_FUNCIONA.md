@@ -47,6 +47,11 @@ PHP, HTML y CSS. Esto facilita la revisión y la demostración académica.
 4. Abrir el sitio y registrar el primer usuario en `register.php`.
    El primer usuario obtiene el rol `admin`; los siguientes, `usuario`.
 
+> **Base creada por una versión anterior:** importar además las migraciones de
+> `database/` (por ejemplo `database/migracion_interactividad.sql`) antes de
+> abrir el sitio. Son idempotentes y no tocan los datos existentes. Detalle en
+> "Actualizar una base de datos existente" del README.
+
 ### 2.3 URLs del entorno
 
 | Entorno | URL |
@@ -79,6 +84,7 @@ PHP, HTML y CSS. Esto facilita la revisión y la demostración académica.
 | `includes/auth.php` | Autenticación, RBAC y coherencia de sesión. |
 | `includes/header.php` / `footer.php` | Estructura visual común. |
 | `database/schema.sql` | Esquema de la base de datos. |
+| `database/migracion_interactividad.sql` | Migración idempotente: `usuarios.avatar` y `notas.fijada` en bases ya creadas. |
 | `POLITICA_SEGURIDAD.md` | Política de seguridad (Fase 5). |
 | `INFORME_PROYECTO.md` | Informe del proyecto y verificación del checklist. |
 | `.htaccess` | Cabeceras, bloqueo de archivos y carpetas internas. |
