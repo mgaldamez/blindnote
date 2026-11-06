@@ -39,16 +39,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'fijada'    => !empty($_POST['fijada']) ? 1 : 0,
     ];
 
-    $resultado = $editando
-        ? actualizar_nota($usuarioId, $notaId, $vals['titulo'], $vals['contenido'])
-        : crear_nota($usuarioId, $vals['titulo'], $vals['contenido']);
+    $resultado = guardar_nota_form(
+        $usuarioId,
+        $editando ? $notaId : null,
+        $vals['titulo'],
+        $vals['contenido'],
+        $vals['fijada'] === 1
+    );
 
     if ($resultado['ok']) {
-        $idAfectada = $editando ? $notaId : (int) db()->lastInsertId();
-        if ($idAfectada > 0) {
-            db()->prepare('UPDATE notas SET fijada = :f WHERE id = :id AND usuario_id = :uid')
-                ->execute([':f' => $vals['fijada'], ':id' => $idAfectada, ':uid' => $usuarioId]);
-        }
         redirigir('notas.php?ok=' . ($editando ? 'editada' : 'creada'));
     }
 
