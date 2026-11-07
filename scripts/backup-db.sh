@@ -34,8 +34,9 @@ fi
 
 # ============================ CONFIGURACIÓN ================================
 
-# Modo de conexión: USE_DOCKER=1 usa `docker exec` contra el contenedor.
-USE_DOCKER="${USE_DOCKER:-0}"
+# Modo de conexión. Vacío = autodetectar (Docker si hay contenedor de BD
+# en ejecución, directo si no). USE_DOCKER=1 fuerza Docker y =0 fuerza directo.
+USE_DOCKER="${USE_DOCKER:-}"
 
 # Archivo .env del proyecto. En modo directo de ahí salen las credenciales.
 ENV_FILE="${ENV_FILE:-$PROJECT_ROOT/.env}"
@@ -61,10 +62,13 @@ LOG_FILE="${LOG_FILE:-$LOG_DIR/backup-db.log}"
 # Días de retención: se borran backups más antiguos que este valor.
 RETENTION_DAYS="${RETENTION_DAYS:-7}"
 
-# Contenedor Docker de la base de datos (vacío = conexión directa).
-# Si se deja vacío, el script intenta detectar automáticamente un contenedor
-# MySQL/MariaDB en ejecución.
+# Contenedor Docker de la base de datos. Vacío = autodetectar.
 DB_CONTAINER="${DB_CONTAINER:-}"
+
+# Proyecto Compose al que pertenece la base de datos. Si se indica, la
+# autodetección solo considera contenedores de ese proyecto, lo que evita
+# elegir la base de otro proyecto que conviva en el mismo servidor.
+DB_COMPOSE_PROJECT="${DB_COMPOSE_PROJECT:-}"
 
 # Opciones de mysqldump. --single-transaction es seguro para tablas InnoDB
 # (no bloquea tablas ni interrumpe lecturas/escrituras en producción).
@@ -123,12 +127,33 @@ leer_env() {
     printf '%s' "$valor"
 }
 
-# Detecta automáticamente un contenedor MySQL/MariaDB en ejecución.
+# Detecta el contenedor de la base de datos MySQL/MariaDB en ejecución.
+#
+# No alcanza con mirar el nombre: en un servidor compartido conviven varias
+# bases (por ejemplo un Postgres llamado "otro-db-1"), y un patrón de nombre
+# elegiría el contenedor equivocado. Se inspecciona la imagen de cada
+# contenedor y se acepta sólo mysql o mariadb.
+#
 detectar_contenedor_db() {
-    local nombre
-    nombre="$(docker ps --format '{{.Names}}' 2>/dev/null \
-        | grep -iE 'mysql|mariadb|-db-|_db$|database' | head -n1)"
-    printf '%s' "$nombre"
+    local contenedor imagen proyecto
+    for contenedor in $(docker ps --format '{{.Names}}' 2>/dev/null); do
+        imagen="$(docker inspect --format '{{.Config.Image}}' "$contenedor" 2>/dev/null || true)"
+        case "$imagen" in
+            *mysql*|*mariadb*) ;;
+            *) continue ;;
+        esac
+
+        # Si se pidió un proyecto Compose concreto, respetarlo.
+        if [[ -n "$DB_COMPOSE_PROJECT" ]]; then
+            proyecto="$(docker inspect \
+                --format '{{index .Config.Labels "com.docker.compose.project"}}' \
+                "$contenedor" 2>/dev/null || true)"
+            [[ "$proyecto" == "$DB_COMPOSE_PROJECT" ]] || continue
+        fi
+
+        printf '%s' "$contenedor"
+        return 0
+    done
 }
 
 # Ejecuta mysqldump y devuelve el volcado en stdout.
@@ -175,6 +200,16 @@ volcar_base_de_datos() {
 # ============================ EJECUCIÓN ====================================
 
 main() {
+    # Resolver el modo de conexión cuando no se indicó explícitamente: si hay un
+    # contenedor MySQL/MariaDB en ejecución se usa Docker; si no, conexión directa.
+    if [[ -z "$USE_DOCKER" ]]; then
+        if [[ -n "$DB_CONTAINER" ]] || [[ -n "$(detectar_contenedor_db)" ]]; then
+            USE_DOCKER=1
+        else
+            USE_DOCKER=0
+        fi
+    fi
+
     # Resolver contenedor si está en modo Docker y no se indicó uno explícito.
     if [[ "$USE_DOCKER" == "1" ]] && [[ -z "${DB_CONTAINER:-}" ]]; then
         DB_CONTAINER="$(detectar_contenedor_db)"
