@@ -47,6 +47,9 @@ error_log
 
 # ------------------------- Respaldos de base de datos ----------------
 # Ojo: database/schema.sql SI se versiona (es parte del entregable).
+# Los volcados que genera scripts/backup-db.sh nunca se versionan.
+backups/
+scripts/logs/
 *.sql.gz
 *.sql.bak
 *.dump
